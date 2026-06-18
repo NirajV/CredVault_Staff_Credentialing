@@ -1,3 +1,4 @@
+import { authFetch, API_URL } from '../services/api.js';
 import { useState, useEffect, useCallback } from 'react';
 import {
   Users, AlertTriangle, CheckCircle, ShieldAlert,
@@ -5,7 +6,6 @@ import {
   ArrowRight, RefreshCw
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3220/api/v1';
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
@@ -19,7 +19,7 @@ function Dashboard({ onNavigate }) {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${API_URL}/dashboard/summary`);
+      const res = await authFetch(`/dashboard/summary`);
       const result = await res.json();
       if (result.success) {
         setData(result.data);

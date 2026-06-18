@@ -1,7 +1,7 @@
+import { authFetch, API_URL } from '../services/api.js';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Bell, Clock, AlertTriangle, XCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3220/api/v1';
 
 const typeStyles = {
   upcoming: { icon: Clock,         bg: 'bg-amber-50',  text: 'text-amber-600', border: 'border-amber-200' },
@@ -25,7 +25,7 @@ export default function AlertsPage({ onNavigateToProvider }) {
   const fetchAlerts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_URL}/alerts`);
+      const res = await authFetch(`/alerts`);
       const result = await res.json();
       if (result.success) {
         setAlerts(result.data);

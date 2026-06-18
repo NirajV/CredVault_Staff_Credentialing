@@ -1,4 +1,5 @@
 import { Sequelize } from 'sequelize';
+import { createUserModel } from '../models/User.js';
 import { createProviderModel } from '../models/Provider.js';
 import { createLicenseModel } from '../models/License.js';
 import { createCertificationModel } from '../models/Certification.js';
@@ -59,6 +60,7 @@ export const initDatabase = async () => {
 
   // Define models
   const models = {
+    User: createUserModel(sequelize, sequelize.Sequelize.DataTypes),
     Provider: createProviderModel(sequelize, sequelize.Sequelize.DataTypes),
     License: createLicenseModel(sequelize, sequelize.Sequelize.DataTypes),
     Certification: createCertificationModel(sequelize, sequelize.Sequelize.DataTypes),

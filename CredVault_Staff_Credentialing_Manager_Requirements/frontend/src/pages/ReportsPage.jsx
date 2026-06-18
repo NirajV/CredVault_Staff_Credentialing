@@ -1,7 +1,7 @@
+import { authFetch, API_URL } from '../services/api.js';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Download, Calendar, FileText } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3220/api/v1';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -35,7 +35,7 @@ export default function ReportsPage() {
   const fetchCalendar = useCallback(async () => {
     try {
       setLoadingCalendar(true);
-      const res = await fetch(`${API_URL}/reports/calendar`);
+      const res = await authFetch(`/reports/calendar`);
       const result = await res.json();
       if (result.success) setCalendarData(result.data);
     } catch (err) {
@@ -48,7 +48,7 @@ export default function ReportsPage() {
   const fetchCompliance = useCallback(async () => {
     try {
       setLoadingCompliance(true);
-      const res = await fetch(`${API_URL}/reports/compliance`);
+      const res = await authFetch(`/reports/compliance`);
       const result = await res.json();
       if (result.success) setComplianceData(result.data);
     } catch (err) {

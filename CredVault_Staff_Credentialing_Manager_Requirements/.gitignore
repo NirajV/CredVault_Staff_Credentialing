@@ -8,6 +8,13 @@ yarn.lock
 .env.local
 .env.*.local
 
+# SQLite database
+*.db
+*.sqlite
+
+# Vite / build
+frontend/.vite/
+
 # IDE
 .vscode/
 .idea/

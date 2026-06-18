@@ -1,7 +1,7 @@
+import { authFetch } from '../../services/api.js';
 import { useState, useEffect } from 'react';
 import { Trash2, Edit2, Save, X, Plus } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3220/api/v1';
 
 const TODAY = new Date();
 TODAY.setHours(0, 0, 0, 0);
@@ -74,7 +74,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
 
   const fetchProvider = async () => {
     try {
-      const response = await fetch(`${API_URL}/providers/${providerId}`);
+      const response = await authFetch(`/providers/${providerId}`);
       const result = await response.json();
       setProvider(result.data);
     } catch (error) {
@@ -85,7 +85,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
   const fetchCredentials = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/credentials/provider/${providerId}`);
+      const response = await authFetch(`/credentials/provider/${providerId}`);
       const result = await response.json();
       setCredentials(result.data);
     } catch (error) {
@@ -97,7 +97,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
 
   const handleSaveProvider = async () => {
     try {
-      const response = await fetch(`${API_URL}/providers/${providerId}`, {
+      const response = await authFetch(`/providers/${providerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData)
@@ -129,7 +129,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
     if (!window.confirm('Delete this credential?')) return;
     try {
       const endpoint = getEndpoint(credentialType);
-      await fetch(`${API_URL}/credentials/${endpoint}/${id}`, { method: 'DELETE' });
+      await authFetch(`/credentials/${endpoint}/${id}`, { method: 'DELETE' });
       await fetchCredentials();
     } catch (error) {
       console.error('Failed to delete credential:', error);
@@ -149,7 +149,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
     } else {
       try {
         const endpoint = getEndpoint(editingCredential.type);
-        const response = await fetch(`${API_URL}/credentials/${endpoint}/${editingCredential.id}`, {
+        const response = await authFetch(`/credentials/${endpoint}/${editingCredential.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(editingCredentialData)
@@ -202,7 +202,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
     if (!editingCredential) return;
     try {
       const endpoint = getEndpoint(editingCredential.type);
-      const response = await fetch(`${API_URL}/credentials/${endpoint}`, {
+      const response = await authFetch(`/credentials/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingCredentialData)
