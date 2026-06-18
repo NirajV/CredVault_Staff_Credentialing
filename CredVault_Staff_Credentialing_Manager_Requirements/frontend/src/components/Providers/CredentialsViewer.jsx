@@ -231,7 +231,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
     <div className="space-y-6">
       {/* Provider Header */}
       {provider && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-sm p-8">
+        <div className="rounded-lg shadow-sm p-8 text-white" style={{ background: 'linear-gradient(135deg, var(--sidebar-from), var(--sidebar-to))' }}>
           {editingProvider ? (
             <ProviderEditForm
               provider={provider}

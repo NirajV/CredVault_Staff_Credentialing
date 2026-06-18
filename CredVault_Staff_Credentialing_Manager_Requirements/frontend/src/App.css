@@ -142,12 +142,22 @@ body {
 [data-theme] .border-blue-200{ border-color: var(--border); }
 [data-theme] .border-blue-900{ border-color: var(--primary); }
 
+[data-theme] .bg-blue-700    { background-color: var(--primary-hover); color: var(--primary-text, #fff); }
+[data-theme] .bg-gray-200    { background-color: var(--border); }
+[data-theme] .bg-gray-300    { background-color: var(--border-strong); }
+[data-theme] .border-blue-300{ border-color: var(--primary-light); }
+[data-theme] .border-blue-400{ border-color: var(--primary); }
+[data-theme] .border-blue-500{ border-color: var(--primary); }
+[data-theme] .text-blue-800  { color: var(--primary); }
+
 [data-theme] .hover\:bg-blue-700:hover   { background-color: var(--primary-hover); }
 [data-theme] .hover\:bg-blue-800:hover   { background-color: var(--primary-hover); }
 [data-theme] .hover\:bg-blue-50:hover    { background-color: var(--accent-light); }
+[data-theme] .hover\:bg-blue-100:hover   { background-color: var(--primary-light); }
 [data-theme] .hover\:bg-gray-50:hover    { background-color: var(--surface-raised); }
 [data-theme] .hover\:bg-gray-100:hover   { background-color: var(--surface-raised); }
 [data-theme] .hover\:bg-gray-200:hover   { background-color: var(--border); }
+[data-theme] .hover\:bg-gray-400:hover   { background-color: var(--border-strong); }
 [data-theme] .hover\:border-blue-200:hover  { border-color: var(--accent); }
 [data-theme] .hover\:border-blue-300:hover  { border-color: var(--accent); }
 [data-theme] .hover\:border-blue-400:hover  { border-color: var(--accent); }
