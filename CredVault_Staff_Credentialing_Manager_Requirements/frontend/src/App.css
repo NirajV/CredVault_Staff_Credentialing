@@ -144,6 +144,18 @@ body {
 [data-theme] .group:hover .group-hover\:text-blue-700 { color: var(--primary-hover); }
 [data-theme] .focus\:ring-blue-500:focus { --tw-ring-color: var(--primary); }
 
+/* Disabled form field states */
+[data-theme] .disabled\:bg-gray-50:disabled  { background-color: var(--surface-raised); }
+[data-theme] .disabled\:text-gray-500:disabled { color: var(--text-muted); }
+
+/* Input placeholder colors */
+[data-theme] input::placeholder,
+[data-theme] textarea::placeholder { color: var(--text-faint); opacity: 1; }
+
+/* Carbon dark theme: native form controls use dark color scheme */
+[data-theme="carbon"] { color-scheme: dark; }
+[data-theme="carbon"] * { color-scheme: dark; }
+
 /* Smooth transitions for themed surfaces */
 [data-theme] .bg-white,
 [data-theme] .bg-gray-50,
