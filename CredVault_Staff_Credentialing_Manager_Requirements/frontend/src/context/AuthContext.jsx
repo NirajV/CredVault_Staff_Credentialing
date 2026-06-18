@@ -18,6 +18,28 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  const register = useCallback(async (data) => {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (!result.success) throw new Error(result.error?.message || 'Registration failed');
+    localStorage.setItem('cv_access_token',  result.data.accessToken);
+    localStorage.setItem('cv_refresh_token', result.data.refreshToken);
+    localStorage.setItem('cv_user',          JSON.stringify(result.data.user));
+    setUser(result.data.user);
+    return result.data.user;
+  }, []);
+
+  const updateUser = useCallback((updates) => {
+    const current = JSON.parse(localStorage.getItem('cv_user') || '{}');
+    const updated = { ...current, ...updates };
+    localStorage.setItem('cv_user', JSON.stringify(updated));
+    setUser(updated);
+  }, []);
+
   const login = useCallback(async (email, password) => {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
@@ -44,7 +66,7 @@ export function AuthProvider({ children }) {
   const getToken = useCallback(() => localStorage.getItem('cv_access_token'), []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, getToken }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, getToken, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
