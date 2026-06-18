@@ -7,6 +7,7 @@ import ProviderDirectory from './components/Providers/ProviderDirectory';
 import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
 import LoginPage from './pages/LoginPage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
 function AppShell() {
@@ -31,7 +32,7 @@ function AppShell() {
       case 'providers': return <ProviderDirectory />;
       case 'alerts':    return <AlertsPage onNavigateToProvider={() => setCurrentPage('providers')} />;
       case 'reports':   return <ReportsPage />;
-      case 'settings':  return <SettingsPlaceholder />;
+      case 'settings':  return <SettingsPage />;
       default:          return <Dashboard onNavigate={setCurrentPage} />;
     }
   };
@@ -51,17 +52,6 @@ function AppShell() {
   );
 }
 
-function SettingsPlaceholder() {
-  const { user } = useAuth();
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-      <p className="text-2xl font-bold text-gray-900 mb-2">Settings</p>
-      <p className="text-gray-500 text-sm mb-4">Logged in as <strong>{user?.email}</strong></p>
-      <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full capitalize">{user?.role}</span>
-      <p className="text-gray-400 text-xs mt-6">Settings panel coming soon.</p>
-    </div>
-  );
-}
 
 export default function App() {
   return (

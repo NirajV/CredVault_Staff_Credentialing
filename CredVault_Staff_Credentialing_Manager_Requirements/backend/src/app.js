@@ -5,6 +5,7 @@ import 'express-async-errors';
 import dotenv from 'dotenv';
 import { initDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
 import providerRoutes from './routes/providers.js';
 import credentialRoutes from './routes/credentials.js';
 import alertRoutes from './routes/alerts.js';
@@ -41,6 +42,9 @@ app.get('/health', (req, res) => {
 
 // Public routes
 app.use('/api/v1/auth', authRoutes);
+
+// User management (admin only — authenticate applied inside router via authorize)
+app.use('/api/v1/users', authenticate, userRoutes);
 
 // Protected routes (require JWT)
 app.use('/api/v1/providers',   authenticate, providerRoutes);
