@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const DEMO_ACCOUNTS = [
@@ -52,11 +52,15 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-2xl mb-4 backdrop-blur-sm">
-            <ShieldCheck size={32} className="text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 rounded-3xl mb-4 backdrop-blur-sm border border-white/20">
+            <svg width="44" height="44" viewBox="0 0 34 34" fill="none">
+              <path d="M17 2L31 9.5V24.5L17 32L3 24.5V9.5L17 2Z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
+              <path d="M17 7L26 11.5V19C26 23.4 22 27 17 28C12 27 8 23.4 8 19V11.5L17 7Z" fill="rgba(255,255,255,0.95)" />
+              <path d="M12.5 19L15.5 22L21.5 15" stroke="#1e3a8a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white">CredVault</h1>
-          <p className="text-blue-200 mt-1 text-sm">Healthcare Provider Credentialing</p>
+          <h1 className="text-4xl font-extrabold text-white tracking-tight">NexaCred</h1>
+          <p className="text-blue-200 mt-1.5 text-sm font-medium tracking-wide">Healthcare Credentialing Platform</p>
         </div>
 
         {/* Card */}
@@ -142,7 +146,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-blue-300 text-xs mt-6">
-          CredVault © {new Date().getFullYear()} · Secure Healthcare Credentialing
+          NexaCred © {new Date().getFullYear()} · Secure Healthcare Credentialing Platform
         </p>
       </div>
     </div>

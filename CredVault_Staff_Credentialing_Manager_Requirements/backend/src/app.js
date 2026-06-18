@@ -11,6 +11,7 @@ import credentialRoutes from './routes/credentials.js';
 import alertRoutes from './routes/alerts.js';
 import reportRoutes from './routes/reports.js';
 import dashboardRoutes from './routes/dashboard.js';
+import alertSettingsRoutes from './routes/alertSettings.js';
 import { authenticate } from './middleware/authenticate.js';
 
 dotenv.config();
@@ -51,7 +52,8 @@ app.use('/api/v1/providers',   authenticate, providerRoutes);
 app.use('/api/v1/credentials', authenticate, credentialRoutes);
 app.use('/api/v1/alerts',      authenticate, alertRoutes);
 app.use('/api/v1/reports',     authenticate, reportRoutes);
-app.use('/api/v1/dashboard',   authenticate, dashboardRoutes);
+app.use('/api/v1/dashboard',       authenticate, dashboardRoutes);
+app.use('/api/v1/alert-settings',  authenticate, alertSettingsRoutes);
 
 app.use('/api/v1', (req, res) => {
   res.json({

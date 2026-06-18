@@ -7,6 +7,7 @@ import { createDEAModel } from '../models/DEA.js';
 import { createMalpracticeModel } from '../models/Malpractice.js';
 import { createPrivilegeModel } from '../models/Privilege.js';
 import { createTaskModel } from '../models/Task.js';
+import { createAlertRuleModel } from '../models/AlertRule.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -67,7 +68,8 @@ export const initDatabase = async () => {
     DEA: createDEAModel(sequelize, sequelize.Sequelize.DataTypes),
     Malpractice: createMalpracticeModel(sequelize, sequelize.Sequelize.DataTypes),
     Privilege: createPrivilegeModel(sequelize, sequelize.Sequelize.DataTypes),
-    Task: createTaskModel(sequelize, sequelize.Sequelize.DataTypes)
+    Task: createTaskModel(sequelize, sequelize.Sequelize.DataTypes),
+    AlertRule: createAlertRuleModel(sequelize, sequelize.Sequelize.DataTypes)
   };
 
   // Set up associations
