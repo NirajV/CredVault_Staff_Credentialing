@@ -47,7 +47,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 flex items-center justify-center p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: 'linear-gradient(135deg, var(--sidebar-from), var(--sidebar-to))' }}
+    >
       <div className="w-full max-w-md">
 
         {/* Logo */}
@@ -56,11 +59,16 @@ export default function LoginPage() {
             <svg width="44" height="44" viewBox="0 0 34 34" fill="none">
               <path d="M17 2L31 9.5V24.5L17 32L3 24.5V9.5L17 2Z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
               <path d="M17 7L26 11.5V19C26 23.4 22 27 17 28C12 27 8 23.4 8 19V11.5L17 7Z" fill="rgba(255,255,255,0.95)" />
-              <path d="M12.5 19L15.5 22L21.5 15" stroke="#1e3a8a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12.5 19L15.5 22L21.5 15" stroke="var(--sidebar-to)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">NexaCred</h1>
-          <p className="text-blue-200 mt-1.5 text-sm font-medium tracking-wide">Healthcare Credentialing Platform</p>
+          <h1
+            className="text-4xl text-white"
+            style={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600, letterSpacing: '-0.01em' }}
+          >
+            NexaCred
+          </h1>
+          <p className="mt-1.5 text-sm font-medium tracking-wide" style={{ color: 'var(--sidebar-muted)' }}>Healthcare Credentialing Platform</p>
         </div>
 
         {/* Card */}
@@ -145,7 +153,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-blue-300 text-xs mt-6">
+        <p className="text-center text-xs mt-6" style={{ color: 'var(--sidebar-muted)' }}>
           NexaCred © {new Date().getFullYear()} · Secure Healthcare Credentialing Platform
         </p>
       </div>

@@ -74,7 +74,15 @@ function Sidebar({ onNavigate, currentPage }) {
       <div className="px-5 py-5 flex items-center gap-3" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
         <NexaCredLogo />
         <div className="min-w-0">
-          <h2 className="text-lg font-extrabold leading-tight tracking-tight" style={{ color: 'var(--sidebar-text)' }}>
+          <h2
+            className="text-lg leading-tight"
+            style={{
+              color: 'var(--sidebar-text)',
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontWeight: 600,
+              letterSpacing: '0.01em',
+            }}
+          >
             NexaCred
           </h2>
           <p className="text-xs font-medium tracking-wide" style={{ color: 'var(--sidebar-muted)' }}>

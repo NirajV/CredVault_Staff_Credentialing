@@ -1,29 +1,31 @@
-/* ─── Default theme tokens (Midnight Navy) ─── */
+/* ─── Default theme tokens (Verdigris Day) ─── */
 :root {
-  --sidebar-from:   #0c1445;
-  --sidebar-to:     #1e3a8a;
-  --sidebar-text:   rgba(255,255,255,0.85);
-  --sidebar-muted:  rgba(147,197,253,0.7);
-  --sidebar-active: rgba(255,255,255,0.15);
-  --sidebar-hover:  rgba(255,255,255,0.08);
-  --sidebar-border: rgba(59,130,246,0.3);
+  --grain:          0.035;
 
-  --primary:        #1d4ed8;
-  --primary-hover:  #1e40af;
-  --primary-light:  #dbeafe;
-  --accent:         #3b82f6;
-  --accent-light:   #eff6ff;
+  --sidebar-from:   #0D2018;
+  --sidebar-to:     #1B4332;
+  --sidebar-text:   rgba(244,247,241,0.92);
+  --sidebar-muted:  rgba(140,190,168,0.72);
+  --sidebar-active: rgba(30,122,102,0.22);
+  --sidebar-hover:  rgba(255,255,255,0.09);
+  --sidebar-border: rgba(17,48,42,0.30);
 
-  --page-bg:        #f1f5f9;
-  --surface:        #ffffff;
-  --surface-raised: #f8fafc;
-  --border:         #e2e8f0;
-  --border-strong:  #cbd5e1;
+  --primary:        #1E7A66;
+  --primary-hover:  #165c4e;
+  --primary-light:  #B7E4C7;
+  --primary-text:   #F4F7F1;
+  --accent:         #A9772A;
+  --accent-light:   #FBF7EE;
 
-  --text:           #0f172a;
-  --text-muted:     #64748b;
-  --text-faint:     #94a3b8;
-  --primary-text:   #ffffff;
+  --page-bg:        #E4E8E0;
+  --surface:        #FBFCF8;
+  --surface-raised: #E4E8E0;
+  --border:         rgba(17,48,42,0.14);
+  --border-strong:  rgba(17,48,42,0.28);
+
+  --text:           #11302A;
+  --text-muted:     #405F55;
+  --text-faint:     #5C6F67;
 
   /* Fixed semantic colors */
   --success:        #10b981;
@@ -34,11 +36,23 @@
 * { color-scheme: light; box-sizing: border-box; }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Hanken Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--page-bg);
   color: var(--text);
   margin: 0;
   transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Verdigris display font for page-level headings */
+[data-theme] h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* JetBrains Mono for data elements */
+[data-theme] .font-mono {
+  font-family: 'JetBrains Mono', 'JetBrains Mono NL', ui-monospace, monospace;
 }
 
 /* ─── Theme-aware sidebar ─── */
@@ -50,7 +64,7 @@ body {
 /* ─── Theme-aware primary buttons ─── */
 .btn-primary {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--primary-text, #fff);
   transition: background 0.2s ease;
 }
 .btn-primary:hover { background: var(--primary-hover); }
@@ -153,9 +167,11 @@ body {
 [data-theme] input::placeholder,
 [data-theme] textarea::placeholder { color: var(--text-faint); opacity: 1; }
 
-/* Carbon dark theme: native form controls use dark color scheme */
-[data-theme="carbon"] { color-scheme: dark; }
-[data-theme="carbon"] * { color-scheme: dark; }
+/* Dark-mode Verdigris + Temper nocturne themes */
+[data-theme="verdigris-dark"],
+[data-theme="temper-dark"] { color-scheme: dark; }
+[data-theme="verdigris-dark"] *,
+[data-theme="temper-dark"] * { color-scheme: dark; }
 
 /* Smooth transitions for themed surfaces */
 [data-theme] .bg-white,
