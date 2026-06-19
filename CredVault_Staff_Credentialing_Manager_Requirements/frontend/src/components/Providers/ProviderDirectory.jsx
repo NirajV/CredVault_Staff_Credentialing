@@ -1,15 +1,30 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Trash2, Eye, User, Mail, Hash, Stethoscope } from 'lucide-react';
+import { Search, Plus, Trash2, Eye, User, Mail, ChevronDown } from 'lucide-react';
 import { useProviders } from '../../hooks/useProviders';
+import { authFetch } from '../../services/api.js';
 import ProviderForm from './ProviderForm';
 import CredentialsViewer from './CredentialsViewer';
 
 function ProviderDirectory({ targetProviderId, onClearTarget }) {
-  const { providers, loading, error, pagination, setPage, setSearchFilter, deleteProvider, refetch } = useProviders();
+  const {
+    providers, loading, error, pagination,
+    setPage, setSearchFilter, setSpecialtyFilter, setStatusFilter,
+    deleteProvider, refetch
+  } = useProviders();
   const [showForm, setShowForm] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [searchInput, setSearchInput] = useState('');
+  const [specialtyInput, setSpecialtyInput] = useState('');
+  const [statusInput, setStatusInput] = useState('');
+  const [metaSpecialties, setMetaSpecialties] = useState([]);
+
+  useEffect(() => {
+    authFetch('/providers/meta')
+      .then(r => r.json())
+      .then(json => { if (json.success) setMetaSpecialties(json.data.specialties); })
+      .catch(() => {});
+  }, []);
 
   // When navigated from Alerts with a specific provider ID, jump straight
   // to that provider's credentials view without waiting for the list to load.
@@ -110,25 +125,82 @@ function ProviderDirectory({ targetProviderId, onClearTarget }) {
         </button>
       </div>
 
-      {/* Search */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-3 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by name or NPI..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          />
+      {/* Search + Filters */}
+      <div className="space-y-2">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name or NPI..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition font-medium text-gray-700"
+          >
+            Search
+          </button>
+        </form>
+
+        {/* Filter dropdowns */}
+        <div className="flex gap-2 flex-wrap">
+          {/* Specialty */}
+          <div className="relative">
+            <select
+              value={specialtyInput}
+              onChange={(e) => {
+                setSpecialtyInput(e.target.value);
+                setSpecialtyFilter(e.target.value);
+              }}
+              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 cursor-pointer min-w-[160px]"
+            >
+              <option value="">All Specialties</option>
+              {metaSpecialties.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-3 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* Status */}
+          <div className="relative">
+            <select
+              value={statusInput}
+              onChange={(e) => {
+                setStatusInput(e.target.value);
+                setStatusFilter(e.target.value);
+              }}
+              className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 cursor-pointer min-w-[140px]"
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+              <option value="terminated">Terminated</option>
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-3 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* Clear filters */}
+          {(specialtyInput || statusInput) && (
+            <button
+              onClick={() => {
+                setSpecialtyInput('');
+                setStatusInput('');
+                setSpecialtyFilter('');
+                setStatusFilter('');
+              }}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 border border-gray-300 rounded-lg transition"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
-        <button
-          type="submit"
-          className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition font-medium text-gray-700"
-        >
-          Search
-        </button>
-      </form>
+      </div>
 
       {/* Error */}
       {error && (

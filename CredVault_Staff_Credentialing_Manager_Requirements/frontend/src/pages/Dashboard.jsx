@@ -9,7 +9,7 @@ import {
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
-function Dashboard({ onNavigate }) {
+function Dashboard({ onNavigate, onNavigateToProvider }) {
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
@@ -196,7 +196,11 @@ function Dashboard({ onNavigate }) {
                 const isExpired = alert.status === 'expired';
                 const isCritical = alert.status === 'critical';
                 return (
-                  <div key={i} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+                  <button
+                    key={i}
+                    onClick={() => alert.providerId && onNavigateToProvider?.(alert.providerId)}
+                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-blue-50 transition text-left group"
+                  >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isExpired ? 'bg-red-100' : 'bg-amber-50'}`}>
                       {isExpired
                         ? <ShieldAlert size={15} className="text-red-600" />
@@ -204,7 +208,9 @@ function Dashboard({ onNavigate }) {
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{alert.providerName}</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-700 transition">
+                        {alert.providerName}
+                      </p>
                       <p className="text-xs text-gray-400 capitalize">{alert.credType} · {formatDate(alert.expiryDate)}</p>
                     </div>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
@@ -217,7 +223,7 @@ function Dashboard({ onNavigate }) {
                         : alert.daysUntilExpiry === 0 ? 'Today'
                         : `${alert.daysUntilExpiry}d`}
                     </span>
-                  </div>
+                  </button>
                 );
               })
             )}

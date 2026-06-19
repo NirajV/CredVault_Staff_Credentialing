@@ -1,6 +1,21 @@
 import { Op } from 'sequelize';
 import { getDatabase } from '../config/database.js';
 
+export const getProviderMeta = async (req, res, next) => {
+  try {
+    const sequelize = getDatabase();
+    const Provider = sequelize.models.Provider;
+    const rows = await Provider.findAll({
+      where: { deletedAt: null },
+      attributes: ['specialty', 'status'],
+      raw: true
+    });
+    const specialties = [...new Set(rows.map(r => r.specialty).filter(Boolean))].sort();
+    const statuses    = [...new Set(rows.map(r => r.status).filter(Boolean))].sort();
+    res.json({ success: true, data: { specialties, statuses } });
+  } catch (err) { next(err); }
+};
+
 export const getProviders = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, specialty, status } = req.query;

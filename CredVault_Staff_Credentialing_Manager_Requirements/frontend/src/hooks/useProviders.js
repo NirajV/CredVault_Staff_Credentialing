@@ -79,6 +79,16 @@ export const useProviders = (initialPage = 1, initialLimit = 20) => {
     setPagination(prev => ({ ...prev, page: 1 }));
   }, []);
 
+  const setSpecialtyFilter = useCallback((specialty) => {
+    setFilters(prev => ({ ...prev, specialty }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
+
+  const setStatusFilter = useCallback((status) => {
+    setFilters(prev => ({ ...prev, status }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
+
   return {
     providers,
     loading,
@@ -87,6 +97,8 @@ export const useProviders = (initialPage = 1, initialLimit = 20) => {
     filters,
     setPage,
     setSearchFilter,
+    setSpecialtyFilter,
+    setStatusFilter,
     createProvider,
     updateProvider,
     deleteProvider,

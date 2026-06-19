@@ -118,10 +118,11 @@ router.get('/summary', async (req, res, next) => {
       .map(c => {
         const provider = providers.find(p => p.id === c.providerId);
         return {
-          providerName: provider ? `${provider.firstName} ${provider.lastName}` : 'Unknown',
-          credType: c.credType,
-          expiryDate: c.expiryDate,
-          status: getExpiryStatus(c.expiryDate),
+          providerId:      c.providerId,
+          providerName:    provider ? `${provider.firstName} ${provider.lastName}` : 'Unknown',
+          credType:        c.credType,
+          expiryDate:      c.expiryDate,
+          status:          getExpiryStatus(c.expiryDate),
           daysUntilExpiry: Math.ceil((new Date(c.expiryDate) - t) / 86400000),
         };
       })

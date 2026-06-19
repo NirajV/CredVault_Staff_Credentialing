@@ -235,7 +235,7 @@ function AppShell() {
       case 'alert-settings': return <AlertSettingsPage />;
       case 'reports':        return <ReportsPage />;
       case 'settings':       return <SettingsPage />;
-      default:               return <Dashboard onNavigate={setCurrentPage} />;
+      default:               return <Dashboard onNavigate={setCurrentPage} onNavigateToProvider={navigateToProvider} />;
     }
   };
 
