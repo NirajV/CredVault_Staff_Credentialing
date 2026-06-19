@@ -245,9 +245,9 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
               <div className="flex items-start justify-between">
                 <div>
                   <h1 className="text-4xl font-bold">{provider.firstName} {provider.lastName}</h1>
-                  <p className="text-blue-100 text-lg mt-1">{provider.specialty}</p>
+                  <p className="text-lg mt-1" style={{ color: 'rgba(255,255,255,0.80)' }}>{provider.specialty}</p>
                   {provider.subSpecialty && (
-                    <p className="text-blue-200 text-sm">{provider.subSpecialty}</p>
+                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{provider.subSpecialty}</p>
                   )}
                 </div>
                 <button
@@ -255,49 +255,59 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     setEditData(provider);
                     setEditingProvider(true);
                   }}
-                  className="flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition font-medium flex-shrink-0"
+                  style={{
+                    background: 'rgba(255,255,255,0.14)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; }}
                 >
                   <Edit2 size={18} />
                   Edit Details
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-blue-400">
+              <div
+                className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-6 border-t"
+                style={{ borderColor: 'rgba(255,255,255,0.18)' }}
+              >
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">NPI</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>NPI</p>
                   <p className="text-white text-lg font-mono mt-1">{provider.npi}</p>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Status</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Status</p>
                   <p className={`text-lg font-medium mt-1 ${provider.status === 'active' ? 'text-green-300' : 'text-red-300'}`}>
                     {provider.status.charAt(0).toUpperCase() + provider.status.slice(1)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Email</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Email</p>
                   <p className="text-white text-sm mt-1 break-all">{provider.email || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Phone</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Phone</p>
                   <p className="text-white text-sm mt-1">{provider.phone || 'N/A'}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-4">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Employment Type</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Employment Type</p>
                   <p className="text-white text-sm mt-1 capitalize">{provider.employmentType?.replace(/_/g, ' ')}</p>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Compliance Score</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Compliance Score</p>
                   <p className="text-white text-lg font-bold mt-1">{provider.complianceScore}%</p>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Hire Date</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Hire Date</p>
                   <p className="text-white text-sm mt-1">{provider.hireDate ? new Date(provider.hireDate).toLocaleDateString() : 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium uppercase">Credentials Count</p>
+                  <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.60)' }}>Credentials Count</p>
                   <p className="text-white text-lg font-bold mt-1">{credentials ? Object.values(credentials).flat().length : 0}</p>
                 </div>
               </div>
@@ -609,14 +619,26 @@ function CredentialTable({ title, headers, rows, expiryDates = [] }) {
       </thead>
       <tbody>
         {rows.length === 0 ? (
-          <tr><td colSpan={headers.length} className="px-4 py-3 text-center text-gray-500">No records found</td></tr>
+          <tr>
+            <td
+              colSpan={headers.length}
+              className="px-4 py-3 text-center text-gray-500"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              No records found
+            </td>
+          </tr>
         ) : (
           rows.map((row, i) => {
             const expired = expiryDates[i] && isExpired(expiryDates[i]);
             return (
-              <tr key={i} className={`border-t border-gray-200 transition ${expired ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}`}>
+              <tr
+                key={i}
+                className={`border-t border-gray-200 transition ${expired ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}`}
+                style={!expired ? { background: 'var(--surface)' } : {}}
+              >
                 {row.map((cell, j) => (
-                  <td key={j} className="px-4 py-2 text-sm">{cell}</td>
+                  <td key={j} className="px-4 py-2 text-sm" style={{ color: 'var(--text)' }}>{cell}</td>
                 ))}
               </tr>
             );

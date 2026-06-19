@@ -130,6 +130,8 @@ body {
 [data-theme] .text-gray-500 { color: var(--text-muted); }
 [data-theme] .text-gray-400 { color: var(--text-faint); }
 
+[data-theme] .text-blue-100  { color: rgba(255,255,255,0.78); }
+[data-theme] .text-blue-200  { color: rgba(255,255,255,0.55); }
 [data-theme] .text-blue-500  { color: var(--accent); }
 [data-theme] .text-blue-600  { color: var(--primary); }
 [data-theme] .text-blue-700  { color: var(--primary); }

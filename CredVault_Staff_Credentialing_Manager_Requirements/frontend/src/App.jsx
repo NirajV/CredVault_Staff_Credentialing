@@ -174,6 +174,7 @@ function GrainOverlay() {
 function AppShell() {
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [targetProviderId, setTargetProviderId] = useState(null);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(
     () => sessionStorage.getItem('cv_disclaimer') === '1'
   );
@@ -215,10 +216,22 @@ function AppShell() {
 
   if (!user) return <LoginPage />;
 
+  const navigateToProvider = (providerId) => {
+    setTargetProviderId(providerId || null);
+    setCurrentPage('providers');
+  };
+
   const renderPage = () => {
     switch (currentPage) {
-      case 'providers':      return <ProviderDirectory />;
-      case 'alerts':         return <AlertsPage onNavigateToProvider={() => setCurrentPage('providers')} />;
+      case 'providers':
+        return (
+          <ProviderDirectory
+            targetProviderId={targetProviderId}
+            onClearTarget={() => setTargetProviderId(null)}
+          />
+        );
+      case 'alerts':
+        return <AlertsPage onNavigateToProvider={navigateToProvider} />;
       case 'alert-settings': return <AlertSettingsPage />;
       case 'reports':        return <ReportsPage />;
       case 'settings':       return <SettingsPage />;

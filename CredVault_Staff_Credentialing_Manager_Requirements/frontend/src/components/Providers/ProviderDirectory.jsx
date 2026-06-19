@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, Eye, User, Mail, Hash, Stethoscope } from 'lucide-react';
 import { useProviders } from '../../hooks/useProviders';
 import ProviderForm from './ProviderForm';
 import CredentialsViewer from './CredentialsViewer';
 
-function ProviderDirectory() {
+function ProviderDirectory({ targetProviderId, onClearTarget }) {
   const { providers, loading, error, pagination, setPage, setSearchFilter, deleteProvider, refetch } = useProviders();
   const [showForm, setShowForm] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [searchInput, setSearchInput] = useState('');
+
+  // When navigated from Alerts with a specific provider ID, jump straight
+  // to that provider's credentials view without waiting for the list to load.
+  useEffect(() => {
+    if (targetProviderId && !showCredentials) {
+      setSelectedProvider({ id: targetProviderId });
+      setShowCredentials(true);
+      onClearTarget?.();
+    }
+  }, [targetProviderId]);
 
   const handleSearch = (e) => {
     e.preventDefault();
