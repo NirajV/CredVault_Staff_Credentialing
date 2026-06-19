@@ -60,6 +60,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('cv_access_token');
     localStorage.removeItem('cv_refresh_token');
     localStorage.removeItem('cv_user');
+    sessionStorage.removeItem('cv_disclaimer');
     setUser(null);
   }, []);
 

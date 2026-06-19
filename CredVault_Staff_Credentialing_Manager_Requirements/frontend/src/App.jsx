@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Header from './components/common/Header';
@@ -31,44 +31,60 @@ const DISCLAIMER_POINTS = [
   },
 ];
 
+/* ── Disclaimer modal ─────────────────────────────────────────── */
 function DisclaimerModal({ user, onAccept }) {
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(5px)' }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+      style={{ background: 'var(--page-bg)' }}
     >
       <div
-        className="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+        className="w-full max-w-[520px] rounded-2xl shadow-xl overflow-hidden"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)' }}
       >
-        {/* Brand strip */}
-        <div className="px-7 pt-7 pb-6">
+        {/* ── Header ── */}
+        <div className="px-8 pt-7 pb-6">
+          {/* Brand row */}
           <div className="flex items-center gap-2.5 mb-5">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, var(--sidebar-from), var(--sidebar-to))' }}
             >
-              <svg width="20" height="20" viewBox="0 0 34 34" fill="none">
-                <path d="M17 7L26 11.5V19C26 23.4 22 27 17 28C12 27 8 23.4 8 19V11.5L17 7Z" fill="rgba(255,255,255,0.92)" />
-                <path d="M12.5 19L15.5 22L21.5 15" stroke="var(--sidebar-to)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="17" height="17" viewBox="0 0 34 34" fill="none">
+                <path
+                  d="M17 7L26 11.5V19C26 23.4 22 27 17 28C12 27 8 23.4 8 19V11.5L17 7Z"
+                  fill="rgba(255,255,255,0.92)"
+                />
+                <path
+                  d="M12.5 19L15.5 22L21.5 15"
+                  stroke="var(--sidebar-to)"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <span
-              className="font-semibold text-sm tracking-wide"
-              style={{ color: 'var(--primary)', fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600 }}
+              style={{
+                color: 'var(--primary)',
+                fontFamily: "'Fraunces', Georgia, serif",
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                letterSpacing: '0.01em',
+              }}
             >
               NexaCred
             </span>
           </div>
 
           <h2
-            className="text-xl font-bold mb-1.5 leading-tight"
-            style={{ color: 'var(--text)', fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600 }}
+            className="text-xl font-bold mb-1.5 leading-snug"
+            style={{ color: 'var(--text)' }}
           >
             Important — Please read before continuing
           </h2>
           {user && (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
               Welcome back, {user.firstName}.
             </p>
           )}
@@ -76,13 +92,13 @@ function DisclaimerModal({ user, onAccept }) {
 
         <div style={{ height: '1px', background: 'var(--border)' }} />
 
-        {/* Body */}
-        <div className="px-7 py-5 space-y-4 max-h-[52vh] overflow-y-auto">
+        {/* ── Body ── */}
+        <div className="px-8 py-6 space-y-4">
           <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
             <strong>NexaCred</strong> is a{' '}
             <strong>credentialing and license management platform</strong> for healthcare
-            organizations. It is intended to assist authorized credentialing staff with
-            provider verification, compliance tracking, and document management, and is{' '}
+            organizations. It assists authorized credentialing staff with provider
+            verification, compliance tracking, and document management, and is{' '}
             <strong>not a substitute for official verification with issuing authorities</strong>.
           </p>
 
@@ -93,12 +109,11 @@ function DisclaimerModal({ user, onAccept }) {
           <ul className="space-y-3">
             {DISCLAIMER_POINTS.map((item, i) => (
               <li key={i} className="flex gap-3 text-sm leading-relaxed">
-                <span
-                  className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ background: 'var(--primary)' }}
-                />
+                <span className="mt-1 flex-shrink-0" style={{ color: 'var(--text-faint)' }}>
+                  •
+                </span>
                 <span style={{ color: 'var(--text-muted)' }}>
-                  <strong style={{ color: 'var(--text)' }}>{item.bold}</strong>{' '}
+                  <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{item.bold}</strong>{' '}
                   {item.text}
                 </span>
               </li>
@@ -113,14 +128,19 @@ function DisclaimerModal({ user, onAccept }) {
 
         <div style={{ height: '1px', background: 'var(--border)' }} />
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div
-          className="px-7 py-4 flex justify-end"
-          style={{ background: 'var(--surface-raised)' }}
+          className="px-8 py-4 flex justify-end items-center"
+          style={{ background: 'var(--primary-light)' }}
         >
           <button
             onClick={onAccept}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-2.5 rounded-lg font-semibold text-sm transition shadow-sm"
+            className="px-7 py-2.5 rounded-lg font-semibold text-sm transition hover:opacity-90"
+            style={{
+              background: 'var(--sidebar-from)',
+              color: '#ffffff',
+              letterSpacing: '0.01em',
+            }}
           >
             I understand &amp; accept
           </button>
@@ -130,6 +150,7 @@ function DisclaimerModal({ user, onAccept }) {
   );
 }
 
+/* ── Grain texture overlay ────────────────────────────────────── */
 function GrainOverlay() {
   return (
     <svg
@@ -149,12 +170,28 @@ function GrainOverlay() {
   );
 }
 
+/* ── App shell ────────────────────────────────────────────────── */
 function AppShell() {
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(
     () => sessionStorage.getItem('cv_disclaimer') === '1'
   );
+
+  // Reset disclaimer whenever the user transitions from null → logged-in
+  // (a fresh login), but NOT on page refresh with an existing session.
+  const prevUserRef = useRef(undefined);
+  useEffect(() => {
+    if (prevUserRef.current === undefined) {
+      prevUserRef.current = user;
+      return;
+    }
+    if (prevUserRef.current === null && user !== null) {
+      // Fresh login: force disclaimer regardless of sessionStorage
+      setDisclaimerAccepted(false);
+    }
+    prevUserRef.current = user;
+  }, [user]);
 
   const handleAcceptDisclaimer = () => {
     sessionStorage.setItem('cv_disclaimer', '1');
@@ -207,7 +244,6 @@ function AppShell() {
     </div>
   );
 }
-
 
 export default function App() {
   return (
