@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Eye, EyeOff, AlertCircle, Mail, Lock, User,
-  Stethoscope, Building2, AlertTriangle, ChevronRight, ArrowLeft
+  Stethoscope, Building2, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,13 +11,6 @@ const DEMO_ACCOUNTS = [
   { role: 'Director',    email: 'director@credvault.com',    password: 'Director@1234', color: 'bg-green-100 text-green-700 border-green-200' },
   { role: 'HR',          email: 'hr@credvault.com',          password: 'HR@Admin1234',  color: 'bg-amber-100 text-amber-700 border-amber-200' },
   { role: 'Auditor',     email: 'auditor@credvault.com',     password: 'Audit@1234',    color: 'bg-gray-100 text-gray-700 border-gray-200' },
-];
-
-const DISCLAIMER_ITEMS = [
-  { bold: 'For Authorized Use Only:', text: 'This system contains Protected Health Information (PHI) restricted to authorized credentialing staff. Unauthorized access is prohibited and logged.' },
-  { bold: 'Patient Privacy:', text: 'Do NOT share provider credentials or personal identifiers outside this system. All access is monitored for HIPAA compliance.' },
-  { bold: 'No Warranty:', text: 'This software is provided "as is" without warranty of any kind. Verify all credential data with official sources before decisions.' },
-  { bold: 'Verify All Information:', text: 'Always confirm license status, certifications, and DEA registrations with the issuing authority before credentialing decisions.' },
 ];
 
 /* ── Shared atoms ─────────────────────────────────────────────── */
@@ -84,27 +77,6 @@ function NexaLogo() {
         <path d="M17 7L26 11.5V19C26 23.4 22 27 17 28C12 27 8 23.4 8 19V11.5L17 7Z" fill="rgba(255,255,255,0.95)" />
         <path d="M12.5 19L15.5 22L21.5 15" stroke="var(--sidebar-to)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-    </div>
-  );
-}
-
-/* ── Disclaimer (collapsible) ─────────────────────────────────── */
-function Disclaimer() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5">
-      <button onClick={() => setOpen(s => !s)} className="flex items-center gap-2 w-full text-left">
-        <AlertTriangle size={15} className="text-amber-600 flex-shrink-0" />
-        <span className="text-sm font-semibold text-amber-800">Important Disclaimer</span>
-        <ChevronRight size={13} className={`ml-auto text-amber-600 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} />
-      </button>
-      {open && (
-        <div className="mt-3 space-y-2 text-xs text-amber-800 leading-relaxed">
-          {DISCLAIMER_ITEMS.map((item, i) => (
-            <p key={i}><strong>{item.bold}</strong> {item.text}</p>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -185,8 +157,6 @@ function LoginView({ onGoRegister, onGoReset }) {
             <button onClick={onGoReset} className="font-semibold text-blue-600 hover:underline">Reset it here</button>
           </p>
         </div>
-
-        <div className="mt-6"><Disclaimer /></div>
 
         <div className="mt-6 pt-5 border-t border-gray-100">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Demo Accounts — click to sign in</p>

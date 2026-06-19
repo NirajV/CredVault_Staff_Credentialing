@@ -12,6 +12,124 @@ import SettingsPage from './pages/SettingsPage';
 import AlertSettingsPage from './pages/AlertSettingsPage';
 import './App.css';
 
+const DISCLAIMER_POINTS = [
+  {
+    bold: 'Authorized Access Only:',
+    text: 'You are an authorized credentialing staff member. Unauthorized access is strictly prohibited and all sessions are audited.',
+  },
+  {
+    bold: 'PHI & Data Privacy:',
+    text: 'Do not share provider credentials, identifiers, or Protected Health Information (PHI) outside this system. All access is monitored for HIPAA compliance.',
+  },
+  {
+    bold: 'Verify All Credentials:',
+    text: 'Always confirm license status, DEA registrations, certifications, and malpractice coverage with the issuing authority before making credentialing decisions.',
+  },
+  {
+    bold: 'Keep Credentials Confidential:',
+    text: 'Maintain the confidentiality of your login credentials and sign out when finished on a shared or public device.',
+  },
+];
+
+function DisclaimerModal({ user, onAccept }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(5px)' }}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+      >
+        {/* Brand strip */}
+        <div className="px-7 pt-7 pb-6">
+          <div className="flex items-center gap-2.5 mb-5">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, var(--sidebar-from), var(--sidebar-to))' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 34 34" fill="none">
+                <path d="M17 7L26 11.5V19C26 23.4 22 27 17 28C12 27 8 23.4 8 19V11.5L17 7Z" fill="rgba(255,255,255,0.92)" />
+                <path d="M12.5 19L15.5 22L21.5 15" stroke="var(--sidebar-to)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span
+              className="font-semibold text-sm tracking-wide"
+              style={{ color: 'var(--primary)', fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600 }}
+            >
+              NexaCred
+            </span>
+          </div>
+
+          <h2
+            className="text-xl font-bold mb-1.5 leading-tight"
+            style={{ color: 'var(--text)', fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600 }}
+          >
+            Important — Please read before continuing
+          </h2>
+          {user && (
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Welcome back, {user.firstName}.
+            </p>
+          )}
+        </div>
+
+        <div style={{ height: '1px', background: 'var(--border)' }} />
+
+        {/* Body */}
+        <div className="px-7 py-5 space-y-4 max-h-[52vh] overflow-y-auto">
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
+            <strong>NexaCred</strong> is a{' '}
+            <strong>credentialing and license management platform</strong> for healthcare
+            organizations. It is intended to assist authorized credentialing staff with
+            provider verification, compliance tracking, and document management, and is{' '}
+            <strong>not a substitute for official verification with issuing authorities</strong>.
+          </p>
+
+          <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+            By continuing, you confirm that:
+          </p>
+
+          <ul className="space-y-3">
+            {DISCLAIMER_POINTS.map((item, i) => (
+              <li key={i} className="flex gap-3 text-sm leading-relaxed">
+                <span
+                  className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: 'var(--primary)' }}
+                />
+                <span style={{ color: 'var(--text-muted)' }}>
+                  <strong style={{ color: 'var(--text)' }}>{item.bold}</strong>{' '}
+                  {item.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-faint)' }}>
+            This acknowledgement is recorded for this session. You can re-read this notice
+            anytime from <em>Settings → My Profile</em>.
+          </p>
+        </div>
+
+        <div style={{ height: '1px', background: 'var(--border)' }} />
+
+        {/* Footer */}
+        <div
+          className="px-7 py-4 flex justify-end"
+          style={{ background: 'var(--surface-raised)' }}
+        >
+          <button
+            onClick={onAccept}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-2.5 rounded-lg font-semibold text-sm transition shadow-sm"
+          >
+            I understand &amp; accept
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GrainOverlay() {
   return (
     <svg
@@ -34,6 +152,14 @@ function GrainOverlay() {
 function AppShell() {
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(
+    () => sessionStorage.getItem('cv_disclaimer') === '1'
+  );
+
+  const handleAcceptDisclaimer = () => {
+    sessionStorage.setItem('cv_disclaimer', '1');
+    setDisclaimerAccepted(true);
+  };
 
   if (loading) {
     return (
@@ -66,6 +192,9 @@ function AppShell() {
   return (
     <div className="flex h-screen" style={{ background: 'var(--page-bg)' }}>
       <GrainOverlay />
+      {!disclaimerAccepted && (
+        <DisclaimerModal user={user} onAccept={handleAcceptDisclaimer} />
+      )}
       <Sidebar onNavigate={setCurrentPage} currentPage={currentPage} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header currentPage={currentPage} onNavigate={setCurrentPage} />
