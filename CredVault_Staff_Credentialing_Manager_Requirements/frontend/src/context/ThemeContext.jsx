@@ -124,6 +124,68 @@ export const themes = {
       '--text-faint':     '#948FB0',
     }
   },
+
+  carbon: {
+    id: 'carbon',
+    name: 'Carbon Day',
+    description: 'Graphite · ember · light',
+    swatch: '#3C4A66',
+    vars: {
+      '--grain':          '0.035',
+      '--sidebar-from':   '#16181C',
+      '--sidebar-to':     '#23272E',
+      '--sidebar-text':   'rgba(242,244,247,0.92)',
+      '--sidebar-muted':  'rgba(180,185,194,0.72)',
+      '--sidebar-active': 'rgba(60,74,102,0.25)',
+      '--sidebar-hover':  'rgba(255,255,255,0.09)',
+      '--sidebar-border': 'rgba(236,237,239,0.18)',
+      '--primary':        '#3C4A66',
+      '--primary-hover':  '#2D3750',
+      '--primary-light':  '#D4D9E3',
+      '--primary-text':   '#F2F4F7',
+      '--accent':         '#BC5526',
+      '--accent-light':   '#FBF4EF',
+      '--page-bg':        '#EDEEF0',
+      '--surface':        '#FBFBFD',
+      '--surface-raised': '#E2E4E7',
+      '--border':         'rgba(22,24,28,0.13)',
+      '--border-strong':  'rgba(22,24,28,0.25)',
+      '--text':           '#23272E',
+      '--text-muted':     '#4B515B',
+      '--text-faint':     '#5B616B',
+    }
+  },
+
+  'carbon-dark': {
+    id: 'carbon-dark',
+    name: 'Carbon Nocturne',
+    description: 'Graphite · ember · dark',
+    swatch: '#8492B4',
+    vars: {
+      '--grain':          '0.055',
+      '--sidebar-from':   '#101214',
+      '--sidebar-to':     '#1C1E21',
+      '--sidebar-text':   'rgba(236,237,239,0.92)',
+      '--sidebar-muted':  'rgba(134,139,148,0.70)',
+      '--sidebar-active': 'rgba(132,146,180,0.22)',
+      '--sidebar-hover':  'rgba(255,255,255,0.07)',
+      '--sidebar-border': 'rgba(236,237,239,0.10)',
+      '--primary':        '#8492B4',
+      '--primary-hover':  '#6B7AA0',
+      '--primary-light':  '#1C2030',
+      '--primary-text':   '#101218',
+      '--accent':         '#E07644',
+      '--accent-light':   '#2A1A0A',
+      '--page-bg':        '#131416',
+      '--surface':        '#1C1E21',
+      '--surface-raised': '#1F2226',
+      '--border':         'rgba(236,237,239,0.10)',
+      '--border-strong':  'rgba(236,237,239,0.20)',
+      '--text':           '#C9CCD2',
+      '--text-muted':     '#9EA4AE',
+      '--text-faint':     '#868B94',
+    }
+  },
 };
 
 const ThemeContext = createContext(null);

@@ -179,11 +179,26 @@ body {
 [data-theme] input::placeholder,
 [data-theme] textarea::placeholder { color: var(--text-faint); opacity: 1; }
 
-/* Dark-mode Verdigris + Temper nocturne themes */
+/* Dark-mode nocturne themes (all three palettes) */
 [data-theme="verdigris-dark"],
-[data-theme="temper-dark"] { color-scheme: dark; }
+[data-theme="temper-dark"],
+[data-theme="carbon-dark"] { color-scheme: dark; }
 [data-theme="verdigris-dark"] *,
-[data-theme="temper-dark"] * { color-scheme: dark; }
+[data-theme="temper-dark"] *,
+[data-theme="carbon-dark"] * { color-scheme: dark; }
+
+/* Dark-mode expired table rows: swap light-pink bg → dark red tint so
+   light var(--text) remains readable on the row background */
+[data-theme="verdigris-dark"] .bg-red-50,
+[data-theme="temper-dark"] .bg-red-50,
+[data-theme="carbon-dark"] .bg-red-50 {
+  background-color: rgba(160,30,30,0.20) !important;
+}
+[data-theme="verdigris-dark"] .hover\:bg-red-100:hover,
+[data-theme="temper-dark"] .hover\:bg-red-100:hover,
+[data-theme="carbon-dark"] .hover\:bg-red-100:hover {
+  background-color: rgba(160,30,30,0.30) !important;
+}
 
 /* Smooth transitions for themed surfaces */
 [data-theme] .bg-white,
