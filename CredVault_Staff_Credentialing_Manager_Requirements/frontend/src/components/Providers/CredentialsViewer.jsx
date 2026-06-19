@@ -56,6 +56,225 @@ function StatusBadge({ status, expiryDate }) {
   );
 }
 
+// ─── Expiry color scale: >180 green → 90 amber → 45 orange → 15 red → 0 critical ──
+function getExpiryColor(days) {
+  if (days === null || days === undefined) return '#6b7280';
+  if (days <= 0)   return '#991b1b';
+  if (days <= 15)  return '#dc2626';
+  if (days <= 45)  return '#ef4444';
+  if (days <= 90)  return '#f97316';
+  if (days <= 180) return '#f59e0b';
+  return '#10b981';
+}
+
+function getExpiryLabel(days) {
+  if (days === null || days === undefined) return 'No expiry';
+  if (days <= 0)   return 'Expired';
+  if (days <= 15)  return 'Critical';
+  if (days <= 45)  return 'Alert';
+  if (days <= 90)  return 'Caution';
+  if (days <= 180) return 'Watch';
+  return 'Safe';
+}
+
+// ─── SVG donut ring ────────────────────────────────────────────────────────────
+function ExpiryRing({ days, expiryDate, size = 'sm' }) {
+  const isLg = size === 'lg';
+  const dim  = isLg ? 76 : 42;
+  const r    = isLg ? 29 : 16;
+  const sw   = isLg ? 5  : 3.5;
+  const cx   = dim / 2;
+  const circ = 2 * Math.PI * r;
+  const color = getExpiryColor(days);
+
+  // Arc fill: days/365 → [0,1]; expired = tiny sliver to show the ring; null = 3/4 placeholder
+  const fill = (days === null || days === undefined)
+    ? 0.75
+    : days <= 0
+    ? 0.04
+    : Math.min(days / 365, 1);
+
+  const arcLen = fill * circ;
+
+  // Center label
+  let topText = '—', botText = '';
+  if (days !== null && days !== undefined) {
+    if (days <= 0) {
+      topText = 'EXP';
+    } else if (days >= 365) {
+      topText = `${Math.round(days / 30)}`;
+      botText = 'mo';
+    } else {
+      topText = `${days}`;
+      botText = 'd';
+    }
+  }
+
+  const isCritical = days !== null && days >= 0 && days <= 15;
+  const tooltip = expiryDate
+    ? `${days <= 0 ? 'Expired' : `${days} day${days === 1 ? '' : 's'} remaining`} · Expires ${new Date(expiryDate).toLocaleDateString()}`
+    : 'No expiry date';
+
+  return (
+    <div
+      className="relative flex-shrink-0 inline-flex items-center justify-center"
+      style={{ width: dim, height: dim }}
+      title={tooltip}
+    >
+      <svg
+        width={dim} height={dim}
+        style={isCritical ? { animation: 'ring-pulse 1.6s ease-in-out infinite' } : {}}
+      >
+        {/* Faint track */}
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke={color} strokeWidth={sw} strokeOpacity={0.14} />
+        {/* Filled arc */}
+        <circle
+          cx={cx} cy={cx} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={sw}
+          strokeLinecap="round"
+          strokeDasharray={`${arcLen} ${circ - arcLen}`}
+          style={{
+            transform: `rotate(-90deg)`,
+            transformOrigin: `${cx}px ${cx}px`,
+            transition: 'stroke-dasharray 0.6s ease, stroke 0.4s ease',
+          }}
+        />
+      </svg>
+      {/* Center label */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none pointer-events-none">
+        <span style={{
+          color,
+          fontFamily: "'JetBrains Mono', 'JetBrains Mono NL', monospace",
+          fontWeight: 700,
+          fontSize: isLg ? '13px' : '8.5px',
+          lineHeight: 1,
+          letterSpacing: '-0.02em',
+        }}>
+          {topText}
+        </span>
+        {botText && (
+          <span style={{
+            color,
+            fontFamily: "'JetBrains Mono', 'JetBrains Mono NL', monospace",
+            fontWeight: 500,
+            fontSize: isLg ? '9px' : '6px',
+            lineHeight: 1,
+            marginTop: '1px',
+            opacity: 0.8,
+          }}>
+            {botText}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Credential Health Overview strip ─────────────────────────────────────────
+function CredentialHealthStrip({ credentials, activeTab, onTabChange }) {
+  const categories = [
+    { key: 'licenses',       label: 'Licenses',    items: credentials?.licenses       || [], getExpiry: i => i.expiryDate },
+    { key: 'certifications', label: 'Certs',       items: credentials?.certifications  || [], getExpiry: i => i.expiryDate },
+    { key: 'deas',           label: 'DEA',          items: credentials?.deas            || [], getExpiry: i => i.expiryDate },
+    { key: 'malpractices',   label: 'Malpractice', items: credentials?.malpractices    || [], getExpiry: i => i.expiryDate },
+    { key: 'privileges',     label: 'Privileges',  items: credentials?.privileges      || [], getExpiry: i => i.expiryDate },
+  ];
+
+  // Global badge counts
+  let expiredTotal = 0, criticalTotal = 0;
+  categories.forEach(cat => {
+    cat.items.forEach(item => {
+      const d = getDaysUntilExpiry(cat.getExpiry(item));
+      if (d !== null && d <= 0)        expiredTotal++;
+      else if (d !== null && d <= 15)  criticalTotal++;
+    });
+  });
+
+  return (
+    <div
+      className="rounded-xl border shadow-sm p-5"
+      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+    >
+      {/* Strip header */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-faint)', letterSpacing: '0.08em' }}>
+          Credential Health
+        </p>
+        <div className="flex gap-2">
+          {expiredTotal > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', display: 'inline-block', flexShrink: 0 }} />
+              {expiredTotal} expired
+            </span>
+          )}
+          {criticalTotal > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', display: 'inline-block', flexShrink: 0 }} />
+              {criticalTotal} critical
+            </span>
+          )}
+          {expiredTotal === 0 && criticalTotal === 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', flexShrink: 0 }} />
+              All clear
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Category donut cards */}
+      <div className="grid grid-cols-5 gap-3">
+        {categories.map(cat => {
+          const daysArr = cat.items.map(i => getDaysUntilExpiry(cat.getExpiry(i))).filter(d => d !== null);
+          const worstDays    = daysArr.length > 0 ? Math.min(...daysArr) : null;
+          const expiredCount = daysArr.filter(d => d <= 0).length;
+          const warnCount    = daysArr.filter(d => d > 0 && d <= 90).length;
+          const color        = getExpiryColor(worstDays);
+          const label        = getExpiryLabel(worstDays);
+          const isActive     = activeTab === cat.key;
+
+          return (
+            <button
+              key={cat.key}
+              onClick={() => onTabChange(cat.key)}
+              className="flex flex-col items-center gap-2 py-3 px-2 rounded-xl transition-all"
+              style={{
+                background:   isActive ? `${color}18` : 'transparent',
+                border:       `1.5px solid ${isActive ? color : 'transparent'}`,
+                outline:      'none',
+                cursor:       'pointer',
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--surface-raised)'; }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <ExpiryRing days={worstDays} size="lg" />
+
+              <div className="text-center">
+                <p className="text-xs font-semibold" style={{ color: 'var(--text)', lineHeight: 1.2 }}>{cat.label}</p>
+                <p style={{ color: 'var(--text-faint)', fontSize: '10px', marginTop: 2 }}>{cat.items.length} total</p>
+              </div>
+
+              {cat.items.length > 0 && (
+                <div style={{ minHeight: 14, textAlign: 'center' }}>
+                  {expiredCount > 0 ? (
+                    <span style={{ color: '#dc2626', fontSize: '10px', fontWeight: 600 }}>{expiredCount} expired</span>
+                  ) : warnCount > 0 ? (
+                    <span style={{ color: '#f97316', fontSize: '10px', fontWeight: 600 }}>{warnCount} expiring</span>
+                  ) : cat.items.length > 0 ? (
+                    <span style={{ color: '#10b981', fontSize: '10px', fontWeight: 500 }}>{label}</span>
+                  ) : null}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
   const [provider, setProvider] = useState(null);
   const [credentials, setCredentials] = useState(null);
@@ -316,6 +535,15 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
         </div>
       )}
 
+      {/* Credential Health Overview strip */}
+      {credentials && (
+        <CredentialHealthStrip
+          credentials={credentials}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
+
       {/* Credentials Section */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Credentials</h2>
@@ -378,6 +606,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     title="Licenses"
                     headers={['State', 'License #', 'Type', 'Issued', 'Expires', 'Status', 'Actions']}
                     expiryDates={credentials?.licenses?.map(l => l.expiryDate) || []}
+                    credentialDays={credentials?.licenses?.map(l => ({ days: getDaysUntilExpiry(l.expiryDate), expiryDate: l.expiryDate })) || []}
                     rows={credentials?.licenses?.map(l => [
                       l.state,
                       l.licenseNumber,
@@ -419,6 +648,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     title="Certifications"
                     headers={['Name', 'Body', 'Certificate #', 'Issued', 'Expires', 'Status', 'Actions']}
                     expiryDates={credentials?.certifications?.map(c => c.expiryDate) || []}
+                    credentialDays={credentials?.certifications?.map(c => ({ days: getDaysUntilExpiry(c.expiryDate), expiryDate: c.expiryDate })) || []}
                     rows={credentials?.certifications?.map(c => [
                       c.certName,
                       c.certifyingBody,
@@ -460,6 +690,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     title="DEA Registrations"
                     headers={['DEA Number', 'State', 'Issued', 'Expires', 'Schedules', 'Status', 'Actions']}
                     expiryDates={credentials?.deas?.map(d => d.expiryDate) || []}
+                    credentialDays={credentials?.deas?.map(d => ({ days: getDaysUntilExpiry(d.expiryDate), expiryDate: d.expiryDate })) || []}
                     rows={credentials?.deas?.map(d => [
                       d.deaNumber,
                       d.state,
@@ -501,6 +732,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     title="Malpractice Insurance"
                     headers={['Carrier', 'Policy #', 'Coverage Per Claim', 'Effective', 'Expires', 'Status', 'Tail', 'Actions']}
                     expiryDates={credentials?.malpractices?.map(m => m.expiryDate) || []}
+                    credentialDays={credentials?.malpractices?.map(m => ({ days: getDaysUntilExpiry(m.expiryDate), expiryDate: m.expiryDate })) || []}
                     rows={credentials?.malpractices?.map(m => [
                       m.carrier,
                       m.policyNumber,
@@ -543,6 +775,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     title="Privileges"
                     headers={['Type', 'Granted', 'Expires', 'Status', 'Restrictions', 'Actions']}
                     expiryDates={credentials?.privileges?.map(p => p.expiryDate) || []}
+                    credentialDays={credentials?.privileges?.map(p => ({ days: getDaysUntilExpiry(p.expiryDate), expiryDate: p.expiryDate })) || []}
                     rows={credentials?.privileges?.map(p => [
                       p.privilegeType,
                       new Date(p.grantedDate).toLocaleDateString(),
@@ -583,6 +816,7 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
                     title="Tasks"
                     headers={['Title', 'Type', 'Due Date', 'Priority', 'Status', 'Actions']}
                     expiryDates={credentials?.tasks?.map(t => t.status !== 'completed' ? t.dueDate : null) || []}
+                    credentialDays={credentials?.tasks?.map(t => ({ days: t.status !== 'completed' ? getDaysUntilExpiry(t.dueDate) : null, expiryDate: t.status !== 'completed' ? t.dueDate : null })) || []}
                     rows={credentials?.tasks?.map(t => {
                       const overdue = t.status !== 'completed' && isExpired(t.dueDate);
                       return [
@@ -607,13 +841,21 @@ function CredentialsViewer({ providerId, providerName, onProviderUpdate }) {
   );
 }
 
-function CredentialTable({ title, headers, rows, expiryDates = [] }) {
+function CredentialTable({ title, headers, rows, expiryDates = [], credentialDays = [] }) {
   return (
     <table className="w-full text-sm">
       <thead className="bg-gray-50">
         <tr>
+          {/* Health ring column — no label, just space */}
+          <th className="px-2 py-2 w-14" style={{ background: 'var(--surface-raised)' }} />
           {headers.map((header, i) => (
-            <th key={i} className="px-4 py-2 text-left font-semibold text-gray-700">{header}</th>
+            <th
+              key={i}
+              className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--text-muted)', background: 'var(--surface-raised)', letterSpacing: '0.06em' }}
+            >
+              {header}
+            </th>
           ))}
         </tr>
       </thead>
@@ -621,8 +863,8 @@ function CredentialTable({ title, headers, rows, expiryDates = [] }) {
         {rows.length === 0 ? (
           <tr>
             <td
-              colSpan={headers.length}
-              className="px-4 py-3 text-center text-gray-500"
+              colSpan={headers.length + 1}
+              className="px-4 py-4 text-center"
               style={{ color: 'var(--text-muted)' }}
             >
               No records found
@@ -631,12 +873,19 @@ function CredentialTable({ title, headers, rows, expiryDates = [] }) {
         ) : (
           rows.map((row, i) => {
             const expired = expiryDates[i] && isExpired(expiryDates[i]);
+            const cd = credentialDays[i];
             return (
               <tr
                 key={i}
                 className={`border-t border-gray-200 transition ${expired ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}`}
                 style={!expired ? { background: 'var(--surface)' } : {}}
               >
+                {/* Health ring */}
+                <td className="px-2 py-1.5 text-center">
+                  {cd !== undefined && (
+                    <ExpiryRing days={cd.days} expiryDate={cd.expiryDate} size="sm" />
+                  )}
+                </td>
                 {row.map((cell, j) => (
                   <td key={j} className="px-4 py-2 text-sm" style={{ color: 'var(--text)' }}>{cell}</td>
                 ))}

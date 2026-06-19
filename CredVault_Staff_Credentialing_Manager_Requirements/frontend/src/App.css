@@ -102,6 +102,12 @@ body {
 }
 .logo-icon { animation: logo-pulse 3s ease-in-out infinite; }
 
+/* ─── Credential expiry ring — critical pulse ─── */
+@keyframes ring-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
 /* ─── Scrollbar styling ─── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
