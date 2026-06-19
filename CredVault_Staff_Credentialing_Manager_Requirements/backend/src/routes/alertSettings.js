@@ -1,32 +1,106 @@
 import express from 'express';
-import nodemailer from 'nodemailer';
 import { getDatabase } from '../config/database.js';
+import { sendCredentialAlertEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
-// Simple dev transporter — logs email to console; swap with real SMTP in production
-const createTransporter = () => {
-  if (process.env.SMTP_HOST) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-    });
-  }
-  // Dev fallback: print to console instead of sending
-  return {
-    sendMail: async (opts) => {
-      console.log('\n📧 [DEV EMAIL]');
-      console.log(`   To:      ${opts.to}`);
-      console.log(`   Subject: ${opts.subject}`);
-      console.log(`   Body:\n${opts.text}`);
-      return { messageId: `dev-${Date.now()}` };
-    }
-  };
-};
+// ─── Alert threshold windows (days before expiry) ─────────────────────────────
+const DEFAULT_THRESHOLDS = [180, 90, 45, 30, 15, 7, 0];
 
-// ---------- CRUD ----------
+// ─── Credential type → model + name field map ─────────────────────────────────
+const CRED_TYPES = [
+  { type: 'license',       model: 'License',       nameField: 'licenseNumber', dateField: 'expiryDate' },
+  { type: 'certification', model: 'Certification',  nameField: 'certName',      dateField: 'expiryDate' },
+  { type: 'dea',           model: 'DEA',            nameField: 'deaNumber',     dateField: 'expiryDate' },
+  { type: 'malpractice',   model: 'Malpractice',    nameField: 'carrier',       dateField: 'expiryDate' },
+  { type: 'privilege',     model: 'Privilege',      nameField: 'privilegeType', dateField: 'expiryDate' },
+  { type: 'task',          model: 'Task',           nameField: 'title',         dateField: 'dueDate'    },
+];
+
+// ─── Core alert-sending logic (shared by /send-alerts and cron job) ───────────
+export async function runAlertJob(db) {
+  const { AlertRule, Provider } = db.models;
+
+  const rules = await AlertRule.findAll({ where: { enabled: true } });
+  if (!rules.length) return { sent: 0, checked: 0, message: 'No active alert rules' };
+
+  const today  = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Use configured thresholds or fall back to defaults
+  const allThresholds = [...new Set([
+    ...rules.flatMap(r => r.thresholds ?? DEFAULT_THRESHOLDS),
+    ...DEFAULT_THRESHOLDS,
+  ])].sort((a, b) => b - a);
+
+  const maxDays = Math.max(...allThresholds);
+  const cutoff  = new Date(today.getTime() + maxDays * 86400000);
+
+  const providers = await Provider.findAll({ where: { deletedAt: null } });
+  const providerMap = Object.fromEntries(providers.map(p => [p.id, p.toJSON()]));
+
+  // Collect all expiring credentials across all types
+  const expiringItems = [];
+  for (const { type, model: modelName, nameField, dateField } of CRED_TYPES) {
+    const Model = db.models[modelName];
+    if (!Model) continue;
+    const rows = await Model.findAll();
+    for (const raw of rows) {
+      const item = raw.toJSON();
+      const dateVal = item[dateField];
+      if (!dateVal) continue;
+      const expiry   = new Date(dateVal);
+      const daysLeft = Math.ceil((expiry - today) / 86400000);
+      // Include if within window OR already expired (daysLeft <= 0) up to -30d
+      if (daysLeft > maxDays || daysLeft < -30) continue;
+      const provider = providerMap[item.providerId];
+      if (!provider) continue;
+      expiringItems.push({ type, name: item[nameField] || type, daysLeft, expiry: dateVal, provider });
+    }
+  }
+
+  if (!expiringItems.length) return { sent: 0, checked: 0, message: 'No credentials in alert window' };
+
+  let emailsSent = 0;
+
+  for (const rule of rules) {
+    const thresholds = rule.thresholds?.length ? rule.thresholds : DEFAULT_THRESHOLDS;
+
+    // Match items this rule covers
+    const matching = expiringItems.filter(item => {
+      const typeMatch = rule.credentialType === 'all' || item.type === rule.credentialType;
+      const dayMatch  = thresholds.some(t => item.daysLeft <= t);
+      return typeMatch && dayMatch;
+    });
+
+    if (!matching.length) continue;
+
+    // Group by provider — one email per provider per rule
+    const byProvider = {};
+    for (const item of matching) {
+      const key = item.provider.id;
+      if (!byProvider[key]) byProvider[key] = { provider: item.provider, items: [] };
+      byProvider[key].items.push(item);
+    }
+
+    for (const { provider, items } of Object.values(byProvider)) {
+      if (!provider.email) continue;
+      const extra = rule.notifyEmail ? [rule.notifyEmail] : [];
+      try {
+        await sendCredentialAlertEmail(provider, items, extra);
+        emailsSent++;
+      } catch (err) {
+        console.error(`[Alert] Failed to send email to ${provider.email}:`, err.message);
+      }
+    }
+  }
+
+  return { sent: emailsSent, checked: expiringItems.length };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRUD routes for alert rules
+// ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/', async (req, res, next) => {
   try {
@@ -41,7 +115,7 @@ router.post('/', async (req, res, next) => {
     const { AlertRule } = getDatabase().models;
     const rule = await AlertRule.create({
       credentialType: req.body.credentialType || 'all',
-      thresholds:     req.body.thresholds     || [7, 30, 60, 90],
+      thresholds:     req.body.thresholds     || DEFAULT_THRESHOLDS,
       notifyEmail:    req.body.notifyEmail     || null,
       notifyRole:     req.body.notifyRole      || null,
       enabled:        req.body.enabled !== undefined ? req.body.enabled : true
@@ -68,151 +142,52 @@ router.delete('/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ---------- EMAIL TRIGGER ----------
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// Manual trigger — POST /alert-settings/send-alerts
+// ═══════════════════════════════════════════════════════════════════════════════
 router.post('/send-alerts', async (req, res, next) => {
   try {
-    const db = getDatabase();
-    const { AlertRule, Provider, License, Certification, DEA, Malpractice, Privilege } = db.models;
-
-    const rules = await AlertRule.findAll({ where: { enabled: true } });
-    if (!rules.length) {
-      return res.json({ success: true, message: 'No active alert rules', sent: 0 });
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const maxDays = Math.max(...rules.flatMap(r => r.thresholds));
-    const cutoff  = new Date(today.getTime() + maxDays * 86400000);
-
-    const providers = await Provider.findAll({ where: { deletedAt: null } });
-    const providerMap = Object.fromEntries(providers.map(p => {
-      const j = p.toJSON();
-      return [j.id, j];
-    }));
-
-    const credentialSets = await Promise.all([
-      License.findAll(),
-      Certification.findAll(),
-      DEA.findAll(),
-      Malpractice.findAll(),
-      Privilege.findAll()
-    ]);
-
-    const typeNames = ['license', 'certification', 'dea', 'malpractice', 'privilege'];
-    const nameFields = ['licenseNumber', 'certName', 'deaNumber', 'carrier', 'privilegeType'];
-
-    // Build expiring items list
-    const expiringItems = [];
-    credentialSets.forEach((items, idx) => {
-      const type      = typeNames[idx];
-      const nameField = nameFields[idx];
-      for (const raw of items) {
-        const item = raw.toJSON();
-        if (!item.expiryDate) continue;
-        const expiry = new Date(item.expiryDate);
-        if (expiry > cutoff || expiry < today) continue; // skip not-yet-relevant or already expired
-        const daysLeft = Math.ceil((expiry - today) / 86400000);
-        const provider = providerMap[item.providerId];
-        if (!provider) continue;
-        expiringItems.push({ type, name: item[nameField] || type, daysLeft, expiry: item.expiryDate, provider });
-      }
+    const result = await runAlertJob(getDatabase());
+    res.json({
+      success: true,
+      message: `Alert job complete — ${result.sent} email${result.sent !== 1 ? 's' : ''} sent`,
+      ...result
     });
-
-    if (!expiringItems.length) {
-      return res.json({ success: true, message: 'No credentials expiring within alert window', sent: 0 });
-    }
-
-    const transporter = createTransporter();
-    const fromAddr = process.env.SMTP_FROM || 'noreply@credvault.com';
-    let emailsSent = 0;
-
-    for (const rule of rules) {
-      const thresholds = rule.thresholds;
-
-      // Filter items matching this rule's credential type and thresholds
-      const matching = expiringItems.filter(item => {
-        const typeMatch = rule.credentialType === 'all' || item.type === rule.credentialType;
-        const dayMatch  = thresholds.some(d => item.daysLeft <= d && item.daysLeft > (
-          // next lower threshold or 0
-          [...thresholds].sort((a,b) => a-b).find(t => t < d) ?? 0
-        ));
-        return typeMatch && dayMatch;
-      });
-
-      if (!matching.length) continue;
-
-      // Group by provider → one email per provider per rule
-      const byProvider = {};
-      for (const item of matching) {
-        const key = item.provider.id;
-        if (!byProvider[key]) byProvider[key] = { provider: item.provider, items: [] };
-        byProvider[key].items.push(item);
-      }
-
-      for (const { provider, items } of Object.values(byProvider)) {
-        const providerEmail = provider.email;
-        const recipients = [
-          providerEmail,
-          rule.notifyEmail
-        ].filter(Boolean).join(', ');
-
-        if (!recipients) continue;
-
-        const itemLines = items.map(i =>
-          `  • ${i.type.charAt(0).toUpperCase() + i.type.slice(1)}: ${i.name} — expires ${i.expiry} (${i.daysLeft} days left)`
-        ).join('\n');
-
-        const subject = `[CredVault] Credential Expiration Alert — ${provider.firstName} ${provider.lastName}`;
-        const text = [
-          `Dear ${provider.firstName} ${provider.lastName},`,
-          '',
-          'The following credentials are expiring soon and require your attention:',
-          '',
-          itemLines,
-          '',
-          'Please log in to CredVault to update or renew these credentials before they expire.',
-          '',
-          'This is an automated message from CredVault Credentialing Manager.',
-        ].join('\n');
-
-        await transporter.sendMail({ from: fromAddr, to: recipients, subject, text });
-        emailsSent++;
-      }
-    }
-
-    res.json({ success: true, message: `Alert emails processed`, sent: emailsSent, itemsChecked: expiringItems.length });
   } catch (err) { next(err); }
 });
 
-// Test a single rule immediately
+// ═══════════════════════════════════════════════════════════════════════════════
+// Test a single rule — POST /alert-settings/test/:id
+// ═══════════════════════════════════════════════════════════════════════════════
 router.post('/test/:id', async (req, res, next) => {
   try {
     const { AlertRule } = getDatabase().models;
     const rule = await AlertRule.findByPk(req.params.id);
     if (!rule) return res.status(404).json({ success: false, error: { message: 'Rule not found' } });
 
-    const to = rule.notifyEmail || req.body.testEmail;
+    const to = req.body.testEmail || rule.notifyEmail;
     if (!to) return res.status(400).json({ success: false, error: { message: 'No email address configured for this rule' } });
 
-    const transporter = createTransporter();
-    const fromAddr = process.env.SMTP_FROM || 'noreply@credvault.com';
+    // Send a realistic sample alert
+    const sampleProvider = {
+      firstName:  'Sample',
+      lastName:   'Provider',
+      email:      to,
+      specialty:  'Internal Medicine',
+      npi:        '1234567890',
+    };
 
-    await transporter.sendMail({
-      from: fromAddr,
-      to,
-      subject: '[CredVault] Test Alert — Rule Working Correctly',
-      text: [
-        'This is a test alert from CredVault.',
-        '',
-        `Rule: ${rule.credentialType === 'all' ? 'All Credentials' : rule.credentialType}`,
-        `Thresholds: ${rule.thresholds.join(', ')} days before expiry`,
-        `Notify Email: ${rule.notifyEmail || '(none)'}`,
-        '',
-        'If you received this, your alert rule is configured correctly.'
-      ].join('\n')
-    });
+    const sampleAlerts = [
+      { type: 'license',       name: 'CA Medical License #A123456',   daysLeft: 14,  expiry: new Date(Date.now() + 14  * 86400000).toISOString() },
+      { type: 'certification', name: 'ABIM Board Certification',       daysLeft: 45,  expiry: new Date(Date.now() + 45  * 86400000).toISOString() },
+      { type: 'dea',           name: 'DEA Registration #AB1234567',    daysLeft: 90,  expiry: new Date(Date.now() + 90  * 86400000).toISOString() },
+      { type: 'malpractice',   name: 'ProAssurance Insurance Policy',  daysLeft: 180, expiry: new Date(Date.now() + 180 * 86400000).toISOString() },
+      { type: 'privilege',     name: 'Clinical Surgical Privileges',   daysLeft: -3,  expiry: new Date(Date.now() - 3   * 86400000).toISOString() },
+    ].filter(a =>
+      rule.credentialType === 'all' || rule.credentialType === a.type
+    );
+
+    await sendCredentialAlertEmail(sampleProvider, sampleAlerts.length ? sampleAlerts : [sampleAlerts[0]], []);
 
     res.json({ success: true, message: `Test alert sent to ${to}` });
   } catch (err) { next(err); }

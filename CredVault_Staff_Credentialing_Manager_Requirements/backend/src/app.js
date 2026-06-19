@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import 'express-async-errors';
 import dotenv from 'dotenv';
+import schedule from 'node-schedule';
 import { initDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
@@ -11,7 +12,7 @@ import credentialRoutes from './routes/credentials.js';
 import alertRoutes from './routes/alerts.js';
 import reportRoutes from './routes/reports.js';
 import dashboardRoutes from './routes/dashboard.js';
-import alertSettingsRoutes from './routes/alertSettings.js';
+import alertSettingsRoutes, { runAlertJob } from './routes/alertSettings.js';
 import { authenticate } from './middleware/authenticate.js';
 
 dotenv.config();
@@ -107,6 +108,19 @@ const startServer = async () => {
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
       console.log(`📋 Providers API: http://localhost:${PORT}/api/v1/providers`);
     });
+
+    // ── Daily credential expiry alert job — runs every day at 8:00 AM ──────────
+    schedule.scheduleJob('0 8 * * *', async () => {
+      console.log(`[Cron] Running daily credential alert job — ${new Date().toISOString()}`);
+      try {
+        const result = await runAlertJob(db);
+        console.log(`[Cron] Alert job done — ${result.sent} email(s) sent, ${result.checked} credential(s) checked`);
+      } catch (err) {
+        console.error('[Cron] Alert job failed:', err.message);
+      }
+    });
+    console.log('⏰ Daily alert job scheduled (08:00 AM every day)');
+
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
     process.exit(1);

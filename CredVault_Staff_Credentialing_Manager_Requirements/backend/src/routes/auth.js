@@ -3,6 +3,19 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDatabase } from '../config/database.js';
 import { authenticate } from '../middleware/authenticate.js';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailService.js';
+
+// Generates a readable temporary password: e.g. Nx8#kP3!
+function generateTempPassword() {
+  const upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower  = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const spec   = '!@#*';
+  const rand   = (s) => s[Math.floor(Math.random() * s.length)];
+  const parts  = [rand(upper), rand(lower), rand(digits), rand(spec),
+                  rand(lower), rand(upper), rand(digits), rand(lower)];
+  return parts.sort(() => Math.random() - 0.5).join('');
+}
 
 const router = express.Router();
 
@@ -98,11 +111,46 @@ router.post('/register', async (req, res, next) => {
 
     const { accessToken, refreshToken } = makeTokens(user.toJSON());
 
+    // Send welcome email (non-blocking — don't fail registration if email fails)
+    sendWelcomeEmail(user.toJSON(), password).catch(err =>
+      console.error('[Email] Failed to send welcome email:', err.message)
+    );
+
     res.status(201).json({
       success: true,
       data: { user: safeUser(user.toJSON()), accessToken, refreshToken },
       timestamp: new Date().toISOString()
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /auth/forgot-password  — generates temp password, emails it
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email)
+      return res.status(400).json({ success: false, error: { message: 'Email is required' } });
+
+    const sequelize = getDatabase();
+    const { User } = sequelize.models;
+    const user = await User.findOne({ where: { email: email.toLowerCase().trim() } });
+
+    // Always return 200 to avoid user enumeration
+    if (!user) {
+      return res.json({ success: true, data: { message: 'If that email exists, a reset link has been sent.' } });
+    }
+
+    const tempPassword   = generateTempPassword();
+    const passwordHash   = await bcrypt.hash(tempPassword, 12);
+    await user.update({ passwordHash });
+
+    sendPasswordResetEmail(user.toJSON(), tempPassword).catch(err =>
+      console.error('[Email] Failed to send password reset email:', err.message)
+    );
+
+    res.json({ success: true, data: { message: 'If that email exists, a reset link has been sent.' } });
   } catch (error) {
     next(error);
   }
