@@ -26,10 +26,11 @@ export const getProviders = async (req, res, next) => {
     const where = { deletedAt: null };
 
     if (search) {
+      const likeOp = sequelize.getDialect() === 'postgres' ? Op.iLike : Op.like;
       where[Op.or] = [
-        { firstName: { [Op.iLike]: `%${search}%` } },
-        { lastName: { [Op.iLike]: `%${search}%` } },
-        { npi: { [Op.iLike]: `%${search}%` } }
+        { firstName: { [likeOp]: `%${search}%` } },
+        { lastName:  { [likeOp]: `%${search}%` } },
+        { npi:       { [likeOp]: `%${search}%` } }
       ];
     }
     if (specialty) where.specialty = specialty;

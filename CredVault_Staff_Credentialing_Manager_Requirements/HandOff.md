@@ -155,15 +155,16 @@ frontend/
 - [x] Authentication — login, register, forgot-password with temp password
 - [x] JWT token management — access (1h) + refresh (7d) stored in localStorage
 - [x] Post-login disclaimer modal (shown once per browser session)
-- [x] 4 visual themes — Verdigris Day (default `#FBFCF8`), Carbon, Ocean, Warm
+- [x] 4 visual themes — Verdigris Day (card `#CDD6CC`), Carbon, Temper, Verdigris Nocturne
 - [x] Sidebar navigation — Dashboard, Providers, Alerts, Reports, Alert Settings, Settings
 
 ### Provider Management
 - [x] Provider Directory — searchable list with avatar, compliance score, status badge
 - [x] Provider CRUD — create, view credentials, soft-delete
-- [x] **NEW** — Specialty filter dropdown (dynamic, from `/providers/meta`)
-- [x] **NEW** — Status filter dropdown (Active / Inactive / Suspended / Terminated)
-- [x] **NEW** — "Clear filters" button appears only when a filter is active
+- [x] Specialty filter dropdown (dynamic, from `/providers/meta`)
+- [x] Status filter dropdown (Active / Inactive / Suspended / Terminated)
+- [x] "Clear filters" button appears only when a filter is active
+- [x] **Search fixed** — was using `Op.iLike` (PostgreSQL-only); now uses dialect-aware `Op.like` for SQLite, `Op.iLike` for PostgreSQL
 
 ### Credential Management
 - [x] Tabbed credentials viewer: Licenses, Certifications, DEA, Malpractice, Privileges, Tasks
@@ -180,7 +181,7 @@ frontend/
 ### Dashboard
 - [x] 6 KPI summary cards (total providers, expiring, expired, compliance rate, avg score, total credentials)
 - [x] Urgent Alerts feed — top 5 most critical credential expirations
-- [x] **NEW** — Clicking a provider name in Urgent Alerts navigates directly to that provider's detail page
+- [x] Clicking a provider name in Urgent Alerts navigates directly to that provider's detail page
 - [x] Provider Status breakdown bars
 - [x] Credential type breakdown grid
 - [x] Specialty breakdown (top 6)
@@ -194,6 +195,7 @@ frontend/
 - [x] Manual trigger — `POST /api/v1/alert-settings/send-alerts`
 - [x] Alert rule test — `POST /api/v1/alert-settings/test/:ruleId` with `{"testEmail":"..."}`
 - [x] Alert thresholds: 180 / 90 / 45 / 30 / 15 / 7 / 0 days
+- [x] **All three templates live-tested** — Welcome, Password Reset, and Credential Alert emails confirmed delivered (2026-06-21)
 
 ### Reports / Alerts Pages
 - [x] Alerts page with filtering and acknowledgement
@@ -206,43 +208,8 @@ frontend/
 
 ### HIGH PRIORITY
 
-#### 1. Test All Three Email Templates
-Gmail quota for `demo@biomedmeet.com` was exceeded during the last testing session. Quota resets overnight (midnight Pacific). Once reset, run these three tests:
-
-**Test A — Welcome email:**
-```
-POST http://localhost:3220/api/v1/auth/register
-Content-Type: application/json
-
-{
-  "email": "testuser2@gmail.com",
-  "password": "Test1234!",
-  "firstName": "Test",
-  "lastName": "User",
-  "role": "coordinator"
-}
-```
-Expected: welcome email arrives at testuser2@gmail.com.
-
-**Test B — Password reset email:**
-```
-POST http://localhost:3220/api/v1/auth/forgot-password
-Content-Type: application/json
-
-{ "email": "testuser2@gmail.com" }
-```
-Expected: reset email with temp password arrives.
-
-**Test C — Credential alert email:**
-First get the alert rule ID (call `GET /api/v1/alert-settings` with JWT), then:
-```
-POST http://localhost:3220/api/v1/alert-settings/test/{ruleId}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{ "testEmail": "NirajKV@Gmail.com" }
-```
-Expected: sample 5-credential alert email arrives.
+#### 1. Provider Edit / Update Form
+There is no "Edit Provider" UI — only Add and Delete. Need an edit form (or inline edit) to update specialty, employment type, status, phone, hire date, etc. The backend `PATCH /providers/:id` endpoint already exists.
 
 ---
 
@@ -302,6 +269,8 @@ HIPAA requires a 7-year audit log. The `audit_log` table is planned in the schem
 | `$pid` is read-only in PowerShell | Use `$p` or `$procId` as the loop variable when iterating PIDs — `$pid` is reserved |
 | Verdigris Day surface color | Was tested with `#84d4e2`, `#ccbaa4`, `#1A3A33` in earlier sessions — reverted to `#FBFCF8` (cream) |
 | Git commit denied for `.env` | Correct — never commit `.env`. Only stage specific code files |
+| Provider search used `Op.iLike` | PostgreSQL-only operator — crashed on SQLite. Fixed to use `sequelize.getDialect() === 'postgres' ? Op.iLike : Op.like` in `providerController.js` |
+| Verdigris Day card surface | Final settled color: `--surface: #CDD6CC`, `--surface-raised: #BEC9BC` (updated in both `ThemeContext.jsx` and `App.css :root`) |
 
 ---
 
@@ -352,28 +321,23 @@ HIPAA requires a 7-year audit log. The `audit_log` table is planned in the schem
 
 ## Git Status at End of This Session
 
-**Uncommitted changes (staged / modified):**
+**All changes committed. Working tree clean.**
+
+**Recent commit history (HEAD → oldest):**
 ```
-M  backend/src/controllers/providerController.js   — added getProviderMeta()
-M  backend/src/routes/dashboard.js                 — urgentAlerts includes providerId
-M  backend/src/routes/providers.js                 — added GET /meta route
-M  frontend/src/App.jsx                            — passes onNavigateToProvider to Dashboard
-M  frontend/src/components/Providers/ProviderDirectory.jsx — specialty + status dropdowns
-M  frontend/src/hooks/useProviders.js              — setSpecialtyFilter, setStatusFilter
-M  frontend/src/pages/Dashboard.jsx               — alert rows clickable → provider detail
+(this session)  Fix provider search Op.iLike→Op.like, set Verdigris Day card #CDD6CC, confirm emails live
+77cdd51         Add dashboard alert click-through, provider directory filters, and HandOff doc
+415dce4         Revert Verdigris Day card surface to original cream white
+af2e8f7         Add email automation: welcome, password reset, and credential alert emails
+a41a507         Add per-credential expiry health KPI rings to Provider Detail
 ```
 
-**Last committed state (HEAD):**
+**Files changed in last commit (this session):**
 ```
-415dce4  Revert Verdigris Day card surface to original cream white
-af2e8f7  Add email automation: welcome, password reset, and credential alert emails
-a41a507  Add per-credential expiry health KPI rings to Provider Detail
-cc01f3b  Add Carbon theme palette and fix dark-mode expired row visibility
-```
-
-**Suggested next commit message:**
-```
-Add dashboard alert click-through and provider directory specialty/status filters
+M  backend/src/controllers/providerController.js   — Op.iLike → dialect-aware Op.like/iLike
+M  frontend/src/context/ThemeContext.jsx            — Verdigris Day --surface: #CDD6CC
+M  frontend/src/App.css                            — :root --surface: #CDD6CC (hard-reload default)
+M  HandOff.md                                      — updated completed features, outstanding tasks, gotchas
 ```
 
 ---
