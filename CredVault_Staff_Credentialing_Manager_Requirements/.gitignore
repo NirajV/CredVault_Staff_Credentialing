@@ -45,5 +45,4 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Docker
-.dockerignore
+# Docker — .dockerignore files ARE committed (they control Docker build context)

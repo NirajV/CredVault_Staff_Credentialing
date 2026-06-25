@@ -2,15 +2,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies first (layer cache)
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
+# Copy source (overridden by volume mount in dev)
 COPY . .
 
-# Expose port
 EXPOSE 5173
 
-# Start development server
-CMD ["npm", "run", "dev"]
+# --host exposes Vite on 0.0.0.0 so Docker port mapping works
+CMD ["npm", "run", "dev", "--", "--host"]

@@ -1,91 +1,102 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+
+  # ── PostgreSQL 15 ────────────────────────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
     container_name: credvault-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: credvault_db
-      POSTGRES_USER: credvault_user
+      POSTGRES_DB:       credvault_db
+      POSTGRES_USER:     credvault_user
       POSTGRES_PASSWORD: credvault_pass
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U credvault_user"]
+      test: ["CMD-SHELL", "pg_isready -U credvault_user -d credvault_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis
-  redis:
-    image: redis:7-alpine
-    container_name: credvault-redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # MinIO (S3-compatible storage for local development)
+  # ── MinIO (S3-compatible local storage) ──────────────────────────────────────
   minio:
     image: minio/minio:latest
     container_name: credvault-minio
+    restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_USER:     minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9000:9000"   # API
+      - "9001:9001"   # Web Console  →  http://localhost:9001
     volumes:
-      - minio-data:/minio-data
-    command: server /minio-data --console-address ":9001"
+      - minio-data:/data
+    command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Backend API
+  # ── Backend (Express / Node 18) ───────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: credvault-backend
+    restart: unless-stopped
     environment:
-      NODE_ENV: development
-      PORT: 3001
-      DATABASE_URL: postgresql://credvault_user:credvault_pass@postgres:5432/credvault_db
-      JWT_SECRET: dev-secret-key-not-for-production
-      CORS_ORIGIN: http://localhost:5173
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      NODE_ENV:             development
+      PORT:                 3220
+      # Switch from SQLite → PostgreSQL
+      DATABASE_URL:         postgresql://credvault_user:credvault_pass@postgres:5432/credvault_db
+      # JWT
+      JWT_SECRET:           dev-secret-key-not-for-production
+      JWT_EXPIRY:           1h
+      JWT_REFRESH_SECRET:   dev-refresh-secret-key-not-for-production
+      JWT_REFRESH_EXPIRY:   7d
+      # CORS
+      CORS_ORIGIN:          http://localhost:5173
+      # Logging
+      LOG_LEVEL:            debug
+      # MinIO — use service name as hostname inside Docker network
+      MINIO_ENDPOINT:       minio:9000
+      MINIO_ACCESS_KEY:     minioadmin
+      MINIO_SECRET_KEY:     minioadmin
+      MINIO_BUCKET:         credvault
+      # Email — set EMAIL_ENABLED=true and fill SMTP_* to activate
+      EMAIL_ENABLED:        "false"
+      SMTP_HOST:            smtp.gmail.com
+      SMTP_PORT:            "587"
+      SMTP_USE_TLS:         "true"
+      SMTP_USER:            ""
+      SMTP_PASSWORD:        ""
+      SMTP_FROM:            ""
+      SENDER_NAME:          NexaCred Team
+      APP_URL:              http://localhost:5173
     ports:
-      - "3001:3001"
+      - "3220:3220"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       minio:
         condition: service_healthy
     volumes:
-      - ./backend/src:/app/src
-    command: npm run dev
+      - ./backend/src:/app/src      # hot-reload source files
 
-  # Frontend
+  # ── Frontend (Vite / React 18) ────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: credvault-frontend
+    restart: unless-stopped
     environment:
-      VITE_API_URL: http://localhost:3001/api/v1
+      # Browser calls backend directly on the host-exposed port
+      VITE_API_URL: http://localhost:3220/api/v1
     ports:
       - "5173:5173"
     depends_on:
@@ -93,12 +104,14 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/index.html:/app/index.html
-    command: npm run dev
+      - ./frontend/public:/app/public
 
+# ── Named volumes ─────────────────────────────────────────────────────────────
 volumes:
   postgres-data:
   minio-data:
 
+# ── Network ───────────────────────────────────────────────────────────────────
 networks:
   default:
     name: credvault-network
