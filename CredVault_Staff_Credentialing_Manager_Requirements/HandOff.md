@@ -201,6 +201,14 @@ frontend/
 - [x] Alerts page with filtering and acknowledgement
 - [x] Reports page with compliance summary and export
 - [x] Alert Settings page — configure rules, notify emails, enable/disable
+- [x] **Alert Settings dark theme fix** — rule cards now use `var(--surface-raised)` / `var(--border-strong)` / `var(--primary-light)` inline styles; threshold badges use `var(--primary-light)` bg + `var(--primary)` text; fully visible across all 3 nocturne themes
+
+### Docker & Infrastructure
+- [x] `docker-compose.yml` — fixed port (3001→3220), all env vars wired, MinIO + PostgreSQL + backend + frontend services
+- [x] `backend/Dockerfile` + `frontend/Dockerfile` — updated with correct ports, `--host` flag for Vite
+- [x] `backend/.dockerignore` + `frontend/.dockerignore` — excludes node_modules, .env, *.db from build context
+- [x] `.gitignore` — removed incorrect rule that was blocking `.dockerignore` files
+- [x] `DOCKER_POSTGRESQL_SETUP.md` — full step-by-step guide (prerequisites, startup, PostgreSQL GUI options, MinIO bucket, email config, SQLite↔PostgreSQL switching, troubleshooting, architecture diagram)
 
 ---
 
@@ -219,9 +227,6 @@ There is no "Edit Provider" UI — only Add and Delete. Need an edit form (or in
 Currently the "Dept:" label in the Provider Directory card shows `provider.specialty` (they share the same field). Consider whether to:
 - Keep as-is (specialty serves as department)
 - Add a separate `department` field to the Provider model and ProviderForm
-
-#### 3. Provider Edit / Update Form
-There is no "Edit Provider" UI — only Add and Delete. Need an edit form to update specialty, employment type, status, phone, etc.
 
 #### 4. Credential Expiry Date Edit — Verify Round-Trip
 The edit flow for credentials (especially licenses) was tested in an earlier session. Confirm the save works correctly for all 5 credential types, especially that the `expiryDate` field persists and the KPI ring updates on reload.
@@ -271,6 +276,8 @@ HIPAA requires a 7-year audit log. The `audit_log` table is planned in the schem
 | Git commit denied for `.env` | Correct — never commit `.env`. Only stage specific code files |
 | Provider search used `Op.iLike` | PostgreSQL-only operator — crashed on SQLite. Fixed to use `sequelize.getDialect() === 'postgres' ? Op.iLike : Op.like` in `providerController.js` |
 | Verdigris Day card surface | Final settled color: `--surface: #CDD6CC`, `--surface-raised: #BEC9BC` (updated in both `ThemeContext.jsx` and `App.css :root`) |
+| Alert Settings dark theme | `bg-gray-50/50` opacity modifier bypasses CSS overrides; `bg-gray-200` maps to near-transparent border in dark themes. Fix: use `style={{ background: 'var(--surface-raised)' }}` directly and `var(--primary-light)` for badges |
+| Docker bring-up guide | See `DOCKER_POSTGRESQL_SETUP.md` — full step-by-step. Run `docker compose up --build` from project root |
 
 ---
 
@@ -325,19 +332,18 @@ HIPAA requires a 7-year audit log. The `audit_log` table is planned in the schem
 
 **Recent commit history (HEAD → oldest):**
 ```
-(this session)  Fix provider search Op.iLike→Op.like, set Verdigris Day card #CDD6CC, confirm emails live
+(this session)  Fix Alert Settings dark theme visibility across all nocturne themes
+4c10f8b         Add Docker + PostgreSQL local setup with step-by-step guide
+19ed40d         Fix provider search, set Verdigris Day card color #CDD6CC, confirm email delivery
 77cdd51         Add dashboard alert click-through, provider directory filters, and HandOff doc
 415dce4         Revert Verdigris Day card surface to original cream white
-af2e8f7         Add email automation: welcome, password reset, and credential alert emails
-a41a507         Add per-credential expiry health KPI rings to Provider Detail
 ```
 
 **Files changed in last commit (this session):**
 ```
-M  backend/src/controllers/providerController.js   — Op.iLike → dialect-aware Op.like/iLike
-M  frontend/src/context/ThemeContext.jsx            — Verdigris Day --surface: #CDD6CC
-M  frontend/src/App.css                            — :root --surface: #CDD6CC (hard-reload default)
-M  HandOff.md                                      — updated completed features, outstanding tasks, gotchas
+M  frontend/src/pages/AlertSettingsPage.jsx  — rule cards, badges, panels all use CSS vars; 
+                                               visible in Verdigris/Temper/Carbon nocturne themes
+M  HandOff.md                               — updated completed features, gotchas, git status
 ```
 
 ---

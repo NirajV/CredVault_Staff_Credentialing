@@ -182,7 +182,7 @@ export default function AlertSettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* ── New Alert Rule Form ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="rounded-xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)' }}>
           <div className="flex items-center gap-2 mb-1">
             <Bell size={18} className="text-gray-700" />
             <h2 className="text-lg font-semibold text-gray-900">New Alert Rule</h2>
@@ -273,27 +273,34 @@ export default function AlertSettingsPage() {
         </div>
 
         {/* ── Active Rules ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Active Rules</h2>
-          <p className="text-sm text-blue-600 mb-5">
+        <div className="rounded-xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)' }}>
+          <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--text)' }}>Active Rules</h2>
+          <p className="text-sm mb-5" style={{ color: 'var(--primary)' }}>
             {rules.length} alert rule{rules.length !== 1 ? 's' : ''} configured
           </p>
 
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+                <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'var(--surface-raised)' }} />
               ))}
             </div>
           ) : rules.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12" style={{ color: 'var(--text-faint)' }}>
               <Bell size={32} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">No alert rules configured yet</p>
             </div>
           ) : (
             <div className="space-y-3">
               {rules.map(rule => (
-                <div key={rule.id} className="flex items-start gap-3 p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition bg-gray-50/50">
+                <div
+                  key={rule.id}
+                  className="flex items-start gap-3 p-4 rounded-xl transition"
+                  style={{
+                    background: 'var(--surface-raised)',
+                    border: '1px solid var(--border-strong)',
+                  }}
+                >
                   {/* Toggle */}
                   <button
                     onClick={() => handleToggleRule(rule)}
@@ -301,28 +308,35 @@ export default function AlertSettingsPage() {
                     title={rule.enabled ? 'Disable rule' : 'Enable rule'}
                   >
                     {rule.enabled
-                      ? <ToggleRight size={28} className="text-blue-900" />
-                      : <ToggleLeft  size={28} className="text-gray-400" />
+                      ? <ToggleRight size={28} style={{ color: 'var(--primary)' }} />
+                      : <ToggleLeft  size={28} style={{ color: 'var(--text-faint)' }} />
                     }
                   </button>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold ${rule.enabled ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <p className="text-sm font-semibold" style={{ color: rule.enabled ? 'var(--text)' : 'var(--text-faint)' }}>
                       {TYPE_LABEL[rule.credentialType] || rule.credentialType}
                     </p>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {(Array.isArray(rule.thresholds) ? rule.thresholds : []).map(d => (
-                        <span key={d} className="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs font-medium">
+                        <span
+                          key={d}
+                          className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                          style={{
+                            background: 'var(--primary-light)',
+                            color: 'var(--primary)',
+                          }}
+                        >
                           {d}d
                         </span>
                       ))}
                     </div>
                     {rule.notifyEmail && (
-                      <p className="text-xs text-gray-500 mt-1 truncate">{rule.notifyEmail}</p>
+                      <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>{rule.notifyEmail}</p>
                     )}
                     {rule.notifyRole && (
-                      <p className="text-xs text-gray-400 truncate">{rule.notifyRole}</p>
+                      <p className="text-xs truncate" style={{ color: 'var(--text-faint)' }}>{rule.notifyRole}</p>
                     )}
                   </div>
 
@@ -332,7 +346,8 @@ export default function AlertSettingsPage() {
                       onClick={() => handleTestAlert(rule)}
                       disabled={testingId === rule.id}
                       title="Send test alert"
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition disabled:opacity-50"
+                      className="p-1.5 rounded-lg transition disabled:opacity-50"
+                      style={{ color: 'var(--primary)' }}
                     >
                       <Send size={15} />
                     </button>
@@ -351,9 +366,9 @@ export default function AlertSettingsPage() {
 
           {/* How it works note */}
           {rules.length > 0 && (
-            <div className="mt-5 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <p className="text-xs text-blue-700 font-medium mb-1">How alerts work</p>
-              <p className="text-xs text-blue-600">
+            <div className="mt-5 p-3 rounded-lg" style={{ background: 'var(--accent-light)', border: '1px solid var(--border)' }}>
+              <p className="text-xs font-medium mb-1" style={{ color: 'var(--primary)' }}>How alerts work</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 When a credential matches a threshold, an email is automatically sent to the provider
                 and to the configured notify email. Click <strong>Send Alerts Now</strong> to trigger immediately,
                 or rules run nightly.
